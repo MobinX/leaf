@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent, Node, mergeAttributes } from '@tiptap/react';
-import html2canvas from 'html2canvas';
+import { domToCanvas } from 'modern-screenshot';
 import { jsPDF } from 'jspdf';
 import { Document } from '@tiptap/extension-document';
 import { Paragraph } from '@tiptap/extension-paragraph';
@@ -375,10 +375,10 @@ const makePdf = async () => {
 
     const editorRoot = editor.view.dom as HTMLElement;
     
-    // Add temporary style to help html2canvas  
+    // Add temporary style to help modern-screenshot  
     const styleEl = document.createElement('style');
     styleEl.textContent = `
-      /* Help html2canvas render without errors */
+      /* Help modern-screenshot render without errors */
       * {
         filter: drop-shadow(none) !important;
       }
@@ -418,12 +418,10 @@ const makePdf = async () => {
 
     console.log('Page ranges detected:', pageRanges);
 
-    const fullCanvas = await html2canvas(editorRoot, {
-      backgroundColor: '#ffffff',
+    // Using modern-screenshot to capture the editor content
+    const fullCanvas = await domToCanvas(editorRoot, {
       scale,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
+      backgroundColor: '#ffffff',
     });
 
     document.head.removeChild(styleEl);

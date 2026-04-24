@@ -39,24 +39,19 @@ const makeRowId = () => {
 
 const createEmptyRow = (): EditableRow => ({ id: makeRowId(), x: '', y: '' });
 
-const toRows = (points: DataPoint[]): EditableRow[] => [
-  ...points.map((point) => ({ id: makeRowId(), x: String(point.x), y: String(point.y) })),
+const toRows = (xData: number[], yData: number[]): EditableRow[] => [
+  ...xData.map((x, idx) => ({ id: makeRowId(), x: String(x), y: String(yData[idx] ?? '') })),
   createEmptyRow(),
 ];
 
-const parsePoints = (raw: unknown): DataPoint[] => {
+const parseNumberArray = (raw: unknown): number[] => {
   if (typeof raw === 'string') {
     try {
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) return [];
       return parsed
-        .map((item) => {
-          if (typeof item !== 'object' || item === null) return null;
-          const point = item as Partial<DataPoint>;
-          if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
-          return { x: Number(point.x), y: Number(point.y) };
-        })
-        .filter((item): item is DataPoint => item !== null);
+        .map((item) => Number(item))
+        .filter((item) => Number.isFinite(item));
     } catch {
       return [];
     }
@@ -64,13 +59,8 @@ const parsePoints = (raw: unknown): DataPoint[] => {
 
   if (Array.isArray(raw)) {
     return raw
-      .map((item) => {
-        if (typeof item !== 'object' || item === null) return null;
-        const point = item as Partial<DataPoint>;
-        if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
-        return { x: Number(point.x), y: Number(point.y) };
-      })
-      .filter((item): item is DataPoint => item !== null);
+      .map((item) => Number(item))
+      .filter((item) => Number.isFinite(item));
   }
 
   return [];
@@ -98,9 +88,14 @@ const getDomain = (values: number[]) => {
 };
 
 export default function ChartNodeView({ node, updateAttributes, selected, deleteNode }: NodeViewProps) {
-  const points = useMemo(() => parsePoints(node.attrs.points), [node.attrs.points]);
+  const xData = useMemo(() => parseNumberArray(node.attrs.xData), [node.attrs.xData]);
+  const yData = useMemo(() => parseNumberArray(node.attrs.yData), [node.attrs.yData]);
+  const points: DataPoint[] = useMemo(() => 
+    xData.map((x, idx) => ({ x, y: yData[idx] ?? 0 })).filter(p => Number.isFinite(p.x) && Number.isFinite(p.y)),
+    [xData, yData]
+  );
   const [isEditing, setIsEditing] = useState(points.length === 0);
-  const [rows, setRows] = useState<EditableRow[]>(toRows(points));
+  const [rows, setRows] = useState<EditableRow[]>(toRows(xData, yData));
   const [draftModel, setDraftModel] = useState<ChartModel>(parseModel(node.attrs.model));
   const [draftXLabel, setDraftXLabel] = useState<string>(node.attrs.xLabel ?? DEFAULT_X_LABEL);
   const [draftYLabel, setDraftYLabel] = useState<string>(node.attrs.yLabel ?? DEFAULT_Y_LABEL);
@@ -204,7 +199,7 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
   };
 
   const openEditModal = () => {
-    setRows(toRows(points));
+    setRows(toRows(xData, yData));
     setDraftModel(model);
     setDraftXLabel(xLabel);
     setDraftYLabel(yLabel);
@@ -233,7 +228,9 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
   };
 
   const saveChanges = () => {
-    const parsed: DataPoint[] = [];
+    const xValues: number[] = [];
+    const yValues: number[] = [];
+    
     for (const row of rows) {
       const xValue = row.x.trim();
       const yValue = row.y.trim();
@@ -248,16 +245,18 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
         setError('X and Y values must be valid numbers.');
         return;
       }
-      parsed.push({ x, y });
+      xValues.push(x);
+      yValues.push(y);
     }
 
-    if (parsed.length < 2) {
+    if (xValues.length < 2) {
       setError('Please add at least 2 valid data points.');
       return;
     }
 
     updateAttributes({
-      points: JSON.stringify(parsed),
+      xData: JSON.stringify(xValues),
+      yData: JSON.stringify(yValues),
       model: draftModel,
       xLabel: draftXLabel.trim() || DEFAULT_X_LABEL,
       yLabel: draftYLabel.trim() || DEFAULT_Y_LABEL,

@@ -1,17 +1,19 @@
 import { Node, mergeAttributes, nodeInputRule } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import ChartNodeView from './ChartNodeView';
-import type { ChartModel, DataPoint } from './chartFitting';
+import type { ChartModel } from './chartFitting';
 
 type InsertChartOptions = {
-  points?: DataPoint[];
+  xData?: number[];
+  yData?: number[];
   model?: ChartModel;
   xLabel?: string;
   yLabel?: string;
 };
 
 const defaultChartAttrs = {
-  points: '[]',
+  xData: '[]',
+  yData: '[]',
   model: 'linear',
   xLabel: 'X',
   yLabel: 'Y',
@@ -29,10 +31,15 @@ export const ChartExtension = Node.create({
 
   addAttributes() {
     return {
-      points: {
-        default: defaultChartAttrs.points,
-        parseHTML: (element: HTMLElement) => element.getAttribute('data-points') ?? defaultChartAttrs.points,
-        renderHTML: (attributes: { points?: string }) => ({ 'data-points': attributes.points ?? defaultChartAttrs.points }),
+      xData: {
+        default: defaultChartAttrs.xData,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-xData') ?? defaultChartAttrs.xData,
+        renderHTML: (attributes: { xData?: string }) => ({ 'data-xData': attributes.xData ?? defaultChartAttrs.xData }),
+      },
+      yData: {
+        default: defaultChartAttrs.yData,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-yData') ?? defaultChartAttrs.yData,
+        renderHTML: (attributes: { yData?: string }) => ({ 'data-yData': attributes.yData ?? defaultChartAttrs.yData }),
       },
       model: {
         default: defaultChartAttrs.model,
@@ -94,13 +101,15 @@ export const ChartExtension = Node.create({
       insertChart:
         (options: InsertChartOptions = {}) =>
         ({ chain }) => {
-          const points = options.points ?? [];
+          const xData = options.xData ?? [];
+          const yData = options.yData ?? [];
           return chain()
             .insertContent({
               type: this.name,
               attrs: {
                 ...defaultChartAttrs,
-                points: JSON.stringify(points),
+                xData: JSON.stringify(xData),
+                yData: JSON.stringify(yData),
                 model: options.model ?? defaultChartAttrs.model,
                 xLabel: options.xLabel ?? defaultChartAttrs.xLabel,
                 yLabel: options.yLabel ?? defaultChartAttrs.yLabel,

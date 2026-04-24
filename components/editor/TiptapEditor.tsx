@@ -22,6 +22,7 @@ import { ImagePlus } from 'tiptap-image-plus';
 import { Code } from '@tiptap/extension-code';
 import { CodeBlock } from '@tiptap/extension-code-block';
 import { PaginationPlus, PAGE_SIZES } from 'tiptap-pagination-plus';
+import { TextAlign } from '@tiptap/extension-text-align';
 import { MathliveExtension } from './MathliveExtension';
 import { ChartExtension } from './ChartExtension';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ import {
   ArrowLeft,
   Wrench,
   Grid2X2,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
   BarChart3,
 } from 'lucide-react';
 
@@ -187,6 +189,11 @@ export default function TiptapEditor() {
       Document, Paragraph, Text, History, Bold, Italic, Underline, Strike, BulletList, OrderedList, ListItem, Blockquote, Code, CodeBlock,
       Link.configure({ openOnClick: false }),
       TableKitPlus.configure(),
+      TextAlign.configure({
+        types: ['paragraph', 'headingOne', 'headingTwo'],
+        alignments: ['left', 'center', 'right', 'justify'],
+        defaultAlignment: 'left',
+      }),
       MathliveExtension, ChartExtension, HeadingOne, HeadingTwo,
       ImagePlus.configure({
         // Optional: custom options
@@ -559,6 +566,13 @@ return (
         <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold"><BoldIcon size={18} /></MenuButton>
         <MenuButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic"><ItalicIcon size={18} /></MenuButton>
         <MenuButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline"><UnderlineIcon size={18} /></MenuButton>
+
+        <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
+
+        <MenuButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left"><AlignLeft size={18} /></MenuButton>
+        <MenuButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Align Center"><AlignCenter size={18} /></MenuButton>
+        <MenuButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align Right"><AlignRight size={18} /></MenuButton>
+        <MenuButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify"><AlignJustify size={18} /></MenuButton>
 
         <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 

@@ -121,14 +121,12 @@ math-field {
 
 .mathfield-shell math-field::part(menu-toggle),
 .mathfield-shell math-field::part(virtual-keyboard-toggle) {
-  opacity: 0;
-  pointer-events: none;
+  display: none !important;
 }
 
 .mathfield-shell[data-mathlive-focused='true'] math-field::part(menu-toggle),
 .mathfield-shell[data-mathlive-focused='true'] math-field::part(virtual-keyboard-toggle) {
-  opacity: 1;
-  pointer-events: auto;
+  display: inline-flex !important;
 }
 
 body {

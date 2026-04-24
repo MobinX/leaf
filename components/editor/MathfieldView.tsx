@@ -23,18 +23,30 @@ export default function MathfieldView({ node, updateAttributes, selected }: Node
 
       const mathField = mfRef.current;
       mathField.value = node.attrs.latex || '';
+      const setTogglesVisible = (visible: boolean) => {
+        const toggles = mathField.shadowRoot?.querySelector('.ML__toggles') as HTMLElement | null;
+        if (!toggles) return;
+        toggles.style.display = visible ? 'flex' : 'none';
+      };
 
       const handleInput = (e: Event) => {
         const target = e.target as MathfieldElement;
         updateAttributes({ latex: target.value });
       };
 
-      const handleFocusIn = () => setIsFocused(true);
-      const handleFocusOut = () => setIsFocused(false);
+      const handleFocusIn = () => {
+        setIsFocused(true);
+        setTogglesVisible(true);
+      };
+      const handleFocusOut = () => {
+        setIsFocused(false);
+        setTogglesVisible(false);
+      };
 
       mathField.addEventListener('input', handleInput);
       mathField.addEventListener('focusin', handleFocusIn);
       mathField.addEventListener('focusout', handleFocusOut);
+      setTogglesVisible(false);
 
       // Focus when created if it's empty (likely just inserted)
       if (!node.attrs.latex) {
@@ -52,7 +64,8 @@ export default function MathfieldView({ node, updateAttributes, selected }: Node
       disposed = true;
       cleanup?.();
     };
-  }, [node.attrs.latex, updateAttributes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (mfRef.current && mfRef.current.value !== node.attrs.latex) {

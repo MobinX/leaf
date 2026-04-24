@@ -113,8 +113,7 @@ export default function MathfieldView({ node, updateAttributes, selected, editor
   );
 }
 
-// Add types for math-field custom element
-declare global {
+declare module 'react' {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicElements {

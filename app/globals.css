@@ -26,7 +26,7 @@
   margin-bottom: 40px !important;
   box-shadow: none;
 }
-.tiptap::foucs {
+.tiptap:focus {
   outline:none !important;
 }
 
@@ -116,22 +116,24 @@ math-field {
   color: black !important;
   background-color: rgba(0,0,0,0.03) !important;
   border-radius: 4px !important;
-  padding: 2px 6px !important;
+  padding: 4px 6px !important;
   font-size: inherit !important;
-  line-height: inherit !important;
   font-family: inherit !important;
-  vertical-align: baseline !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  line-height: normal !important;
 }
 
 .mathfield-shell {
   font-size: inherit !important;
-  line-height: inherit !important;
+  vertical-align: middle !important;
+  line-height: normal !important;
 }
 
 .mathfield-shell math-field::part(container),
 .mathfield-shell math-field::part(content) {
   font-size: inherit !important;
-  line-height: inherit !important;
+  overflow: visible !important;
 }
 
 .mathfield-shell math-field::part(menu-toggle),

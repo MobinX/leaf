@@ -1,26 +1,138 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 
+/* Force light mode colors for the entire application */
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+/* AGGRESSIVE EDITOR STYLING */
+.tiptap-page-container {
+  background-color: #f3f4f6 !important;
+  color-scheme: light !important;
+}
+
+.tiptap {
+  background-color: white !important;
+  color: black !important;
+  margin-bottom: 40px !important;
+  box-shadow: none;
+}
+.tiptap::foucs {
+  outline:none !important;
+}
+
+/* 1. Force Headings to be HUGE and BOLD */
+.ProseMirror h1, 
+.tiptap-page h1,
+h1 {
+  display: block !important;
+  font-size: 32pt !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  margin-top: 20pt !important;
+  margin-bottom: 10pt !important;
+  color: black !important;
+  text-align: left !important;
+}
+
+.ProseMirror h2, 
+.tiptap-page h2,
+h2 {
+  display: block !important;
+  font-size: 24pt !important;
+  font-weight: 700 !important;
+  margin-top: 18pt !important;
+  margin-bottom: 8pt !important;
+  color: black !important;
+}
+
+/* 2. Force Tables to have BLACK BORDERS */
+.ProseMirror table,
+.tiptap-page table,
+table {
+  border-collapse: collapse !important;
+  margin: 1em 0 !important;
+  width: 100% !important;
+  border: 2px solid black !important;
+}
+
+.ProseMirror td, 
+.ProseMirror th,
+.tiptap-page td,
+.tiptap-page th,
+td, th {
+  border: 1px solid black !important;
+  padding: 10px !important;
+  min-width: 1em !important;
+  color: black !important;
+  background-color: transparent !important;
+}
+
+.ProseMirror th, th {
+  background-color: #eeeeee !important;
+  font-weight: bold !important;
+}
+
+/* 3. Force Lists to show DOTS and NUMBERS */
+.ProseMirror ul, ul {
+  list-style-type: disc !important;
+  padding-left: 30pt !important;
+  margin: 10pt 0 !important;
+  display: block !important;
+}
+
+.ProseMirror ol, ol {
+  list-style-type: decimal !important;
+  padding-left: 30pt !important;
+  margin: 10pt 0 !important;
+  display: block !important;
+}
+
+.ProseMirror li, li {
+  display: list-item !important;
+  color: black !important;
+}
+
+/* 4. Force Blockquote visibility */
+.ProseMirror blockquote, blockquote {
+  border-left: 5px solid #444 !important;
+  padding-left: 15pt !important;
+  margin: 15pt 0 !important;
+  font-style: italic !important;
+  color: #333 !important;
+}
+
+/* Mathfield styling */
+math-field {
+  color: black !important;
+  background-color: rgba(0,0,0,0.03) !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+}
+
+.mathfield-shell math-field::part(menu-toggle),
+.mathfield-shell math-field::part(virtual-keyboard-toggle) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mathfield-shell[data-mathlive-focused='true'] math-field::part(menu-toggle),
+.mathfield-shell[data-mathlive-focused='true'] math-field::part(virtual-keyboard-toggle) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f3f4f6;
+  color: black;
+  font-family: sans-serif;
 }

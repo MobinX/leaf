@@ -9,7 +9,7 @@ interface MathfieldElement extends HTMLElement {
   focus: () => void;
 }
 
-export default function MathfieldView({ node, updateAttributes, selected }: NodeViewProps) {
+export default function MathfieldView({ node, updateAttributes, selected, editor }: NodeViewProps) {
   const mfRef = useRef<MathfieldElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -33,6 +33,20 @@ export default function MathfieldView({ node, updateAttributes, selected }: Node
         const target = e.target as MathfieldElement;
         updateAttributes({ latex: target.value });
       };
+      const handleKeyDown = (e: KeyboardEvent) => {
+        const key = e.key.toLowerCase();
+        const hasPrimary = e.metaKey || e.ctrlKey;
+        if (!hasPrimary || e.altKey) return;
+
+        const isUndo = key === 'z' && !e.shiftKey;
+        const isRedo = (key === 'z' && e.shiftKey) || key === 'y';
+        if (!isUndo && !isRedo) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        if (isUndo) editor.commands.undo();
+        if (isRedo) editor.commands.redo();
+      };
 
       const handleFocusIn = () => {
         setIsFocused(true);
@@ -44,6 +58,7 @@ export default function MathfieldView({ node, updateAttributes, selected }: Node
       };
 
       mathField.addEventListener('input', handleInput);
+      mathField.addEventListener('keydown', handleKeyDown, true);
       mathField.addEventListener('focusin', handleFocusIn);
       mathField.addEventListener('focusout', handleFocusOut);
       setTogglesVisible(false);
@@ -55,6 +70,7 @@ export default function MathfieldView({ node, updateAttributes, selected }: Node
 
       cleanup = () => {
         mathField.removeEventListener('input', handleInput);
+        mathField.removeEventListener('keydown', handleKeyDown, true);
         mathField.removeEventListener('focusin', handleFocusIn);
         mathField.removeEventListener('focusout', handleFocusOut);
       };

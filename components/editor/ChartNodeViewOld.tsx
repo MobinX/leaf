@@ -12,9 +12,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { AlignCenter, AlignLeft, AlignRight, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, Pencil, Plus, Trash2 } from 'lucide-react';
 import { chartModelOptions, fitLeastSquares, type ChartModel, type DataPoint } from './chartFitting';
-import type { Dataset } from './ChartExtension';
 
 type EditableRow = {
   id: string;
@@ -25,6 +24,7 @@ type EditableRow = {
 type ChartAlignment = 'left' | 'center' | 'right';
 type ResizeMode = 'horizontal' | 'vertical' | 'both' | null;
 
+const DEFAULT_MODEL: ChartModel = 'linear';
 const DEFAULT_X_LABEL = 'X';
 const DEFAULT_Y_LABEL = 'Y';
 const DEFAULT_WIDTH = '100%';
@@ -66,25 +66,16 @@ const parseNumberArray = (raw: unknown): number[] => {
   return [];
 };
 
-const parseDatasets = (raw: unknown): Dataset[] => {
-  if (typeof raw === 'string') {
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (!Array.isArray(parsed)) return [];
-      return parsed.filter((ds) => ds.id && Array.isArray(ds.xData) && Array.isArray(ds.yData) && ds.model);
-    } catch {
-      return [];
-    }
-  }
-  if (Array.isArray(raw)) {
-    return raw.filter((ds) => ds.id && Array.isArray(ds.xData) && Array.isArray(ds.yData) && ds.model);
-  }
-  return [];
-};
-
 const parseAlignment = (raw: unknown): ChartAlignment => {
   if (raw === 'left' || raw === 'center' || raw === 'right') return raw;
   return 'center';
+};
+
+const parseModel = (raw: unknown): ChartModel => {
+  if (chartModelOptions.some((option) => option.value === raw)) {
+    return raw as ChartModel;
+  }
+  return DEFAULT_MODEL;
 };
 
 const getDomain = (values: number[]) => {
@@ -96,14 +87,21 @@ const getDomain = (values: number[]) => {
   return [min - pad, max + pad] as const;
 };
 
-const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#ea580c', '#7c3aed', '#0891b2'];
+// Existing code...
+// The list of accepted model names are: linear, linear_y_mx, exponential, logarithmic, sine, cosine, tangent, power, logistic, polynomial, gaussian.
+// These are managed by chartModelOptions from './chartFitting'.
 
 export default function ChartNodeView({ node, updateAttributes, selected, deleteNode }: NodeViewProps) {
-  const datasets = useMemo(() => parseDatasets(node.attrs.datasets), [node.attrs.datasets]);
-  const [isEditing, setIsEditing] = useState(datasets.length === 0);
-  const [editingDatasets, setEditingDatasets] = useState<Array<{ dataset: Dataset; rows: EditableRow[] }>>(
-    datasets.map((ds) => ({ dataset: ds, rows: toRows(ds.xData, ds.yData) }))
+// ... rest of the code
+  const xData = useMemo(() => parseNumberArray(node.attrs.xData), [node.attrs.xData]);
+  const yData = useMemo(() => parseNumberArray(node.attrs.yData), [node.attrs.yData]);
+  const points: DataPoint[] = useMemo(() => 
+    xData.map((x, idx) => ({ x, y: yData[idx] ?? 0 })).filter(p => Number.isFinite(p.x) && Number.isFinite(p.y)),
+    [xData, yData]
   );
+  const [isEditing, setIsEditing] = useState(points.length === 0);
+  const [rows, setRows] = useState<EditableRow[]>(toRows(xData, yData));
+  const [draftModel, setDraftModel] = useState<ChartModel>(parseModel(node.attrs.model));
   const [draftXLabel, setDraftXLabel] = useState<string>(node.attrs.xLabel ?? DEFAULT_X_LABEL);
   const [draftYLabel, setDraftYLabel] = useState<string>(node.attrs.yLabel ?? DEFAULT_Y_LABEL);
   const [error, setError] = useState<string>('');
@@ -118,30 +116,22 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
   const [liveWidth, setLiveWidth] = useState<string | null>(null);
   const [liveHeight, setLiveHeight] = useState<string | null>(null);
 
+  const model = parseModel(node.attrs.model);
   const alignment = parseAlignment(node.attrs.alignment);
   const xLabel = (node.attrs.xLabel as string) || DEFAULT_X_LABEL;
   const yLabel = (node.attrs.yLabel as string) || DEFAULT_Y_LABEL;
   const width = liveWidth ?? ((node.attrs.width as string) || DEFAULT_WIDTH);
   const chartHeight = liveHeight ?? ((node.attrs.height as string) || DEFAULT_HEIGHT);
+  const fitResult = useMemo(() => fitLeastSquares(points, model), [points, model]);
 
-  // Prepare chart data combining all datasets
-  const allPoints: Array<{ x: number; y: number; datasetId: string }> = [];
-  const fitResults: Record<string, ReturnType<typeof fitLeastSquares>> = {};
-
-  datasets.forEach((ds, idx) => {
-    const points: DataPoint[] = ds.xData
-      .map((x, i) => ({ x, y: ds.yData[i] ?? 0 }))
-      .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
-    
-    fitResults[ds.id] = fitLeastSquares(points, ds.model);
-    points.forEach((p) => allPoints.push({ ...p, datasetId: ds.id }));
-  });
-
-  const xDomain = getDomain(allPoints.map((p) => p.x));
-  const yValues = allPoints.map((p) => p.y).concat(
-    Object.values(fitResults).flatMap((fr) => fr.curve.map((p) => p.y))
-  );
-  const yDomain = getDomain(yValues);
+  const curveData = fitResult.curve.map((point) => ({ x: point.x, fit: point.y }));
+  const scatterData = points.map((point) => ({ x: point.x, y: point.y }));
+  const combinedData = [...curveData, ...scatterData].sort((a, b) => a.x - b.x);
+  const xDomain = getDomain(combinedData.map((point) => point.x));
+  const yDomain = getDomain([
+    ...scatterData.map((point) => point.y),
+    ...curveData.map((point) => point.fit),
+  ]);
   const justifyContent =
     alignment === 'left' ? 'flex-start' : alignment === 'right' ? 'flex-end' : 'center';
 
@@ -214,150 +204,71 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
   };
 
   const openEditModal = () => {
-    setEditingDatasets(
-      datasets.map((ds) => ({ dataset: ds, rows: toRows(ds.xData, ds.yData) }))
-    );
+    setRows(toRows(xData, yData));
+    setDraftModel(model);
     setDraftXLabel(xLabel);
     setDraftYLabel(yLabel);
     setError('');
     setIsEditing(true);
   };
 
-  const updateDatasetRows = (dsIndex: number, rowIndex: number, key: keyof EditableRow, value: string) => {
-    setEditingDatasets((prev) =>
-      prev.map((item, idx) => {
-        if (idx !== dsIndex) return item;
-        const nextRows = item.rows.map((row, i) => (i === rowIndex ? { ...row, [key]: value } : row));
-        const lastRow = nextRows[nextRows.length - 1];
-        if (lastRow && (lastRow.x.trim() !== '' || lastRow.y.trim() !== '')) {
-          nextRows.push(createEmptyRow());
-        }
-        return { ...item, rows: nextRows };
-      })
-    );
+  const updateRow = (rowIndex: number, key: keyof EditableRow, value: string) => {
+    setRows((prevRows) => {
+      const nextRows = prevRows.map((row, index) => (index === rowIndex ? { ...row, [key]: value } : row));
+      const lastRow = nextRows[nextRows.length - 1];
+      if (lastRow && (lastRow.x.trim() !== '' || lastRow.y.trim() !== '')) {
+        nextRows.push(createEmptyRow());
+      }
+      return nextRows;
+    });
   };
 
-  const addDatasetRow = (dsIndex: number) => {
-    setEditingDatasets((prev) =>
-      prev.map((item, idx) => (idx === dsIndex ? { ...item, rows: [...item.rows, createEmptyRow()] } : item))
-    );
-  };
+  const addRow = () => setRows((prevRows) => [...prevRows, createEmptyRow()]);
 
-  const removeDatasetRow = (dsIndex: number, rowIndex: number) => {
-    setEditingDatasets((prev) =>
-      prev.map((item, idx) => {
-        if (idx !== dsIndex || item.rows.length <= 2) return item;
-        return { ...item, rows: item.rows.filter((_, i) => i !== rowIndex) };
-      })
-    );
-  };
-
-  const addDataset = () => {
-    setEditingDatasets((prev) => [
-      ...prev,
-      {
-        dataset: { id: makeRowId(), xData: [], yData: [], model: 'linear', label: `Dataset ${prev.length + 1}` },
-        rows: [createEmptyRow()],
-      },
-    ]);
-  };
-
-  const removeDataset = (dsIndex: number) => {
-    setEditingDatasets((prev) => prev.filter((_, idx) => idx !== dsIndex));
-  };
-
-  const updateDatasetLabel = (dsIndex: number, label: string) => {
-    setEditingDatasets((prev) =>
-      prev.map((item, idx) => (idx === dsIndex ? { ...item, dataset: { ...item.dataset, label } } : item))
-    );
-  };
-
-  const updateDatasetModel = (dsIndex: number, model: ChartModel) => {
-    setEditingDatasets((prev) =>
-      prev.map((item, idx) => (idx === dsIndex ? { ...item, dataset: { ...item.dataset, model } } : item))
-    );
+  const removeRow = (rowIndex: number) => {
+    setRows((prevRows) => {
+      if (prevRows.length <= 2) return prevRows;
+      return prevRows.filter((_, index) => index !== rowIndex);
+    });
   };
 
   const saveChanges = () => {
-    const newDatasets: Dataset[] = [];
-
-    for (const item of editingDatasets) {
-      const xValues: number[] = [];
-      const yValues: number[] = [];
-
-      for (const row of item.rows) {
-        const xValue = row.x.trim();
-        const yValue = row.y.trim();
-        if (!xValue && !yValue) continue;
-        if (!xValue || !yValue) {
-          setError('Each filled row must have both X and Y values.');
-          return;
-        }
-        const x = Number(xValue);
-        const y = Number(yValue);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
-          setError('X and Y values must be valid numbers.');
-          return;
-        }
-        xValues.push(x);
-        yValues.push(y);
-      }
-
-      if (xValues.length < 2) {
-        setError('Each dataset must have at least 2 valid data points.');
+    const xValues: number[] = [];
+    const yValues: number[] = [];
+    
+    for (const row of rows) {
+      const xValue = row.x.trim();
+      const yValue = row.y.trim();
+      if (!xValue && !yValue) continue;
+      if (!xValue || !yValue) {
+        setError('Each filled row must have both X and Y values.');
         return;
       }
-
-      newDatasets.push({
-        ...item.dataset,
-        xData: xValues,
-        yData: yValues,
-      });
+      const x = Number(xValue);
+      const y = Number(yValue);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        setError('X and Y values must be valid numbers.');
+        return;
+      }
+      xValues.push(x);
+      yValues.push(y);
     }
 
-    if (newDatasets.length === 0) {
-      setError('Please add at least one dataset.');
+    if (xValues.length < 2) {
+      setError('Please add at least 2 valid data points.');
       return;
     }
 
     updateAttributes({
-      datasets: JSON.stringify(newDatasets),
+      xData: JSON.stringify(xValues),
+      yData: JSON.stringify(yValues),
+      model: draftModel,
       xLabel: draftXLabel.trim() || DEFAULT_X_LABEL,
       yLabel: draftYLabel.trim() || DEFAULT_Y_LABEL,
     });
     setError('');
     setIsEditing(false);
   };
-
-  // Prepare chart data for Recharts: merge data points + fitted curves
-  const chartDataMap = new Map<number, Record<string, any>>();
-  
-  // Add data points
-  datasets.forEach((ds, idx) => {
-    ds.xData.forEach((x, dataIdx) => {
-      const y = ds.yData[dataIdx];
-      if (!chartDataMap.has(x)) {
-        chartDataMap.set(x, { x });
-      }
-      chartDataMap.get(x)![`y${idx}`] = y;
-    });
-  });
-
-  // Add fitted curve points
-  datasets.forEach((ds, idx) => {
-    const fit = fitResults[ds.id];
-    if (fit.ok) {
-      fit.curve.forEach((point) => {
-        if (!chartDataMap.has(point.x)) {
-          chartDataMap.set(point.x, { x: point.x });
-        }
-        chartDataMap.get(point.x)![`fit${idx}`] = point.y;
-      });
-    }
-  });
-
-  // Convert map to sorted array
-  const chartData = Array.from(chartDataMap.values()).sort((a, b) => a.x - b.x);
 
   return (
     <NodeViewWrapper className="chart-node-wrapper block my-4">
@@ -414,23 +325,16 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
           )}
 
           <div className="px-3 pt-3 pb-1 text-xs text-gray-700 space-y-1">
-            {datasets.map((ds, idx) => {
-              const fit = fitResults[ds.id];
-              return (
-                <div key={ds.id} className="border-l-2 pl-2" style={{ borderColor: COLORS[idx % COLORS.length] }}>
-                  <div className="font-semibold text-[11px] tracking-wide uppercase text-gray-500">
-                    {ds.label || `Dataset ${idx + 1}`} ({ds.model} fit)
-                  </div>
-                  <div className="font-mono text-[11px] break-all">{fit.equation}</div>
-                  <div className="text-[11px]">{fit.ok ? `R² = ${fit.r2.toFixed(4)}` : fit.error}</div>
-                </div>
-              );
-            })}
+            <div className="font-semibold text-[11px] tracking-wide uppercase text-gray-500">{model} fit</div>
+            <div className="font-mono text-[11px] break-all">{fitResult.equation}</div>
+            <div className="text-[11px]">
+              {fitResult.ok ? `R² = ${fitResult.r2.toFixed(4)}` : fitResult.error}
+            </div>
           </div>
 
           <div className="w-full px-2 pb-2" style={{ height: chartHeight }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 52, bottom: 24 }}>
+              <ComposedChart data={combinedData} margin={{ top: 10, right: 20, left: 52, bottom: 24 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   type="number"
@@ -451,27 +355,15 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
                   formatter={(value) => Number(value ?? 0).toFixed(2)}
                   labelFormatter={(label) => Number(label ?? 0).toFixed(2)}
                 />
-                {datasets.map((ds, idx) => (
-                  <React.Fragment key={ds.id}>
-                    <Scatter
-                      dataKey={`y${idx}`}
-                      fill={COLORS[idx % COLORS.length]}
-                      stroke={COLORS[idx % COLORS.length]}
-                      strokeWidth={1.25}
-                      shape="circle"
-                      isAnimationActive={false}
-                    />
-                    <Line
-                      dataKey={`fit${idx}`}
-                      stroke={COLORS[idx % COLORS.length]}
-                      dot={false}
-                      isAnimationActive={false}
-                      strokeWidth={2.5}
-                      type="monotone"
-                      connectNulls={true}
-                    />
-                  </React.Fragment>
-                ))}
+                <Scatter
+                  dataKey="y"
+                  fill="#2563eb"
+                  stroke="#1d4ed8"
+                  strokeWidth={1.25}
+                  shape="circle"
+                  isAnimationActive={false}
+                />
+                <Line dataKey="fit" stroke="#ef4444" dot={false} isAnimationActive={false} strokeWidth={2} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -502,7 +394,7 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
         <div className="fixed inset-0 z-[120] bg-black/35 flex items-center justify-center p-4">
           <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl border p-4 space-y-4 max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold">Multi-dataset chart editor</h3>
+              <h3 className="text-sm font-bold">Chart data editor</h3>
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
@@ -512,9 +404,23 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <label className="text-xs font-medium text-gray-700 space-y-1">
-                <span>X label (for all datasets)</span>
+                <span>Model</span>
+                <select
+                  value={draftModel}
+                  onChange={(event) => setDraftModel(event.target.value as ChartModel)}
+                  className="w-full h-9 px-2 border rounded-md text-xs"
+                >
+                  {chartModelOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-medium text-gray-700 space-y-1">
+                <span>X label</span>
                 <input
                   value={draftXLabel}
                   onChange={(event) => setDraftXLabel(event.target.value)}
@@ -522,7 +428,7 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
                 />
               </label>
               <label className="text-xs font-medium text-gray-700 space-y-1">
-                <span>Y label (for all datasets)</span>
+                <span>Y label</span>
                 <input
                   value={draftYLabel}
                   onChange={(event) => setDraftYLabel(event.target.value)}
@@ -531,103 +437,56 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
               </label>
             </div>
 
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-              {editingDatasets.map((item, dsIndex) => (
-                <div key={item.dataset.id} className="border rounded-lg p-3 bg-gray-50 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1">
-                      <div className="w-4 h-4 rounded" style={{ backgroundColor: COLORS[dsIndex % COLORS.length] }} />
-                      <input
-                        value={item.dataset.label || `Dataset ${dsIndex + 1}`}
-                        onChange={(e) => updateDatasetLabel(dsIndex, e.target.value)}
-                        className="text-xs font-medium px-2 py-1 border rounded flex-1"
-                        placeholder={`Dataset ${dsIndex + 1}`}
-                      />
-                      <select
-                        value={item.dataset.model}
-                        onChange={(e) => updateDatasetModel(dsIndex, e.target.value as ChartModel)}
-                        className="text-xs px-2 py-1 border rounded-md"
-                      >
-                        {chartModelOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {editingDatasets.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeDataset(dsIndex)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        title="Delete dataset"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="border rounded overflow-hidden">
-                    <table className="w-full text-xs">
-                      <thead className="bg-gray-200">
-                        <tr>
-                          <th className="text-left p-2 border-b">X</th>
-                          <th className="text-left p-2 border-b">Y</th>
-                          <th className="text-left p-2 border-b w-[80px]">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {item.rows.map((row, rowIndex) => (
-                          <tr key={row.id}>
-                            <td className="p-2 border-b">
-                              <input
-                                value={row.x}
-                                onChange={(e) => updateDatasetRows(dsIndex, rowIndex, 'x', e.target.value)}
-                                className="w-full h-8 px-2 border rounded text-xs"
-                                placeholder="x"
-                              />
-                            </td>
-                            <td className="p-2 border-b">
-                              <input
-                                value={row.y}
-                                onChange={(e) => updateDatasetRows(dsIndex, rowIndex, 'y', e.target.value)}
-                                className="w-full h-8 px-2 border rounded text-xs"
-                                placeholder="y"
-                              />
-                            </td>
-                            <td className="p-2 border-b">
-                              <button
-                                type="button"
-                                onClick={() => removeDatasetRow(dsIndex, rowIndex)}
-                                className="text-[11px] px-2 py-1 rounded border hover:bg-gray-100"
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => addDatasetRow(dsIndex)}
-                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border hover:bg-gray-50"
-                  >
-                    <Plus size={12} /> Add row
-                  </button>
-                </div>
-              ))}
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-xs">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left p-2 border-b">X</th>
+                    <th className="text-left p-2 border-b">Y</th>
+                    <th className="text-left p-2 border-b w-[80px]">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, rowIndex) => (
+                    <tr key={row.id}>
+                      <td className="p-2 border-b">
+                        <input
+                          value={row.x}
+                          onChange={(event) => updateRow(rowIndex, 'x', event.target.value)}
+                          className="w-full h-8 px-2 border rounded"
+                          placeholder="x"
+                        />
+                      </td>
+                      <td className="p-2 border-b">
+                        <input
+                          value={row.y}
+                          onChange={(event) => updateRow(rowIndex, 'y', event.target.value)}
+                          className="w-full h-8 px-2 border rounded"
+                          placeholder="y"
+                        />
+                      </td>
+                      <td className="p-2 border-b">
+                        <button
+                          type="button"
+                          onClick={() => removeRow(rowIndex)}
+                          className="text-[11px] px-2 py-1 rounded border hover:bg-gray-50"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             <div className="flex items-center justify-between">
               <button
                 type="button"
-                onClick={addDataset}
+                onClick={addRow}
                 className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded border hover:bg-gray-50"
               >
-                <Plus size={12} /> Add dataset
+                <Plus size={12} /> Add row
               </button>
               {error ? <div className="text-xs text-red-600">{error}</div> : <div />}
               <button

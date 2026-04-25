@@ -3,24 +3,53 @@ import { ReactNodeViewRenderer } from '@tiptap/react';
 import ChartNodeView from './ChartNodeView';
 import type { ChartModel } from './chartFitting';
 
+export type Dataset = {
+  id: string;
+  xData: number[];
+  yData: number[];
+  model: ChartModel;
+  label?: string;
+};
+
 type InsertChartOptions = {
-  xData?: number[];
-  yData?: number[];
-  model?: ChartModel;
+  datasets?: Dataset[];
   xLabel?: string;
   yLabel?: string;
 };
 
 const defaultChartAttrs = {
-  xData: '[]',
-  yData: '[]',
-  model: 'linear',
+  datasets: '[]',
   xLabel: 'X',
   yLabel: 'Y',
   width: '100%',
   height: '70vh',
   alignment: 'center',
 } as const;
+
+// Helper: Convert old format to new dataset format
+const parseOldFormat = (element: HTMLElement): Dataset[] => {
+  const xDataStr = element.getAttribute('data-xdata') ?? element.getAttribute('data-xData');
+  const yDataStr = element.getAttribute('data-ydata') ?? element.getAttribute('data-yData');
+  const model = (element.getAttribute('data-model') ?? 'linear') as ChartModel;
+
+  if (!xDataStr || !yDataStr) return [];
+
+  try {
+    const xData = JSON.parse(xDataStr) as number[];
+    const yData = JSON.parse(yDataStr) as number[];
+    if (!Array.isArray(xData) || !Array.isArray(yData)) return [];
+    return [
+      {
+        id: `legacy-${Date.now()}`,
+        xData,
+        yData,
+        model,
+      },
+    ];
+  } catch {
+    return [];
+  }
+};
 
 export const ChartExtension = Node.create({
   name: 'chart',
@@ -31,20 +60,17 @@ export const ChartExtension = Node.create({
 
   addAttributes() {
     return {
-      xData: {
-        default: defaultChartAttrs.xData,
-        parseHTML: (element: HTMLElement) => element.getAttribute('data-xData') ?? defaultChartAttrs.xData,
-        renderHTML: (attributes: { xData?: string }) => ({ 'data-xData': attributes.xData ?? defaultChartAttrs.xData }),
-      },
-      yData: {
-        default: defaultChartAttrs.yData,
-        parseHTML: (element: HTMLElement) => element.getAttribute('data-yData') ?? defaultChartAttrs.yData,
-        renderHTML: (attributes: { yData?: string }) => ({ 'data-yData': attributes.yData ?? defaultChartAttrs.yData }),
-      },
-      model: {
-        default: defaultChartAttrs.model,
-        parseHTML: (element: HTMLElement) => element.getAttribute('data-model') ?? defaultChartAttrs.model,
-        renderHTML: (attributes: { model?: string }) => ({ 'data-model': attributes.model ?? defaultChartAttrs.model }),
+      datasets: {
+        default: defaultChartAttrs.datasets,
+        parseHTML: (element: HTMLElement) => {
+          // Try new format first
+          const newFormat = element.getAttribute('data-datasets');
+          if (newFormat) return newFormat;
+          // Fall back to old format conversion
+          const oldDatasets = parseOldFormat(element);
+          return JSON.stringify(oldDatasets);
+        },
+        renderHTML: (attributes: { datasets?: string }) => ({ 'data-datasets': attributes.datasets ?? defaultChartAttrs.datasets }),
       },
       xLabel: {
         default: defaultChartAttrs.xLabel,
@@ -101,16 +127,13 @@ export const ChartExtension = Node.create({
       insertChart:
         (options: InsertChartOptions = {}) =>
         ({ chain }) => {
-          const xData = options.xData ?? [];
-          const yData = options.yData ?? [];
+          const datasets = options.datasets ?? [];
           return chain()
             .insertContent({
               type: this.name,
               attrs: {
                 ...defaultChartAttrs,
-                xData: JSON.stringify(xData),
-                yData: JSON.stringify(yData),
-                model: options.model ?? defaultChartAttrs.model,
+                datasets: JSON.stringify(datasets),
                 xLabel: options.xLabel ?? defaultChartAttrs.xLabel,
                 yLabel: options.yLabel ?? defaultChartAttrs.yLabel,
               },

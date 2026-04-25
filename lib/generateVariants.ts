@@ -49,7 +49,18 @@ Rules:
 1) theory/results_discussion must each contain exactly 3 variants.
 2) Output HTML only (no markdown wrappers).
 3) Use <math>...</math> for equations and <chart ...></chart> where relevant.
-4) "common" must include tables/calculation content without variants.`;
+4) "common" must include tables/calculation content without variants.
+
+CHART TAG FORMAT (Multi-dataset support):
+<chart data-datasets='[{"id":"ds1","xData":[x1,x2,...],"yData":[y1,y2,...],"model":"linear","label":"Label"}]' data-x-label="X axis" data-y-label="Y axis"></chart>
+
+CHART RULES:
+- Each dataset: {id (unique), xData (array), yData (array), model (one of: linear, linear_y_mx, exponential, logarithmic, sine, cosine, tangent, power, logistic, polynomial, gaussian), label (optional)}
+- All datasets share same x/y labels
+- Can combine 1-N datasets in single chart
+- Chart auto-fits curves using least squares
+- Keep JSON valid and parseable`;
+
 
   const prompt = buildPromptText(input);
 

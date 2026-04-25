@@ -449,14 +449,14 @@ const makePdf = async (fileName: string) => {
 
   setIsMakingPdf(true);
   try {
-    if (showHtmlView && htmlDirty) {
-      const applied = editor.commands.setContent(htmlOutput);
-      if (!applied) {
-        console.error('Failed to apply HTML edits before PDF export.');
-        return;
-      }
-      setHtmlDirty(false);
-    }
+//     if (showHtmlView && htmlDirty) {
+//       const applied = editor.commands.setContent(htmlOutput);
+//       if (!applied) {
+//         console.error('Failed to apply HTML edits before PDF export.');
+//         return;
+//       }
+//       setHtmlDirty(false);
+//     }
 
     const editorRoot = editor.view.dom as HTMLElement;
     

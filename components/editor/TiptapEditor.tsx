@@ -12,7 +12,7 @@ import { Italic } from '@tiptap/extension-italic';
 import { Underline } from '@tiptap/extension-underline';
 import { Strike } from '@tiptap/extension-strike';
 import { History } from '@tiptap/extension-history';
-import { TableKitPlus } from 'tiptap-table-plus';
+import { TableKit } from '@tiptap/extension-table';
 import { BulletList } from '@tiptap/extension-bullet-list';
 import { OrderedList } from '@tiptap/extension-ordered-list';
 import { ListItem } from '@tiptap/extension-list-item';
@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
 import {
   Bold as BoldIcon, Italic as ItalicIcon, Underline as UnderlineIcon,
-  Heading1, Heading2, List, ListOrdered,
+  Heading1, Heading2, Heading3, Heading4, List, ListOrdered,
   Table as TableIcon, Sigma, Undo, Redo,
   Image as ImageIcon,
   Printer,
@@ -51,7 +51,18 @@ import {
   Grid2X2,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   BarChart3,
+  FileText,
 } from 'lucide-react';
+
+const COVER_TEMPLATES = {
+  'M-012': `<h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">Lab Report</h2><p style="text-align: center;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Experiment name:  </u></em></h3><h4 style="text-align: left; font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0px;"><strong><em><u>jkjkjkasjdfkjadsfjkasdkfjasdfkjasdfjaskdljfkl;sdjflkasdjfklsdjfsdjfksdjfsldjfklsdjfklsdajflsdjfk</u></em></strong></h4><p style="text-align: left;"></p><p style="text-align: left;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Experiment Number :</u>   O5</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Experiment Date:</u>  02/02/2026</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Name</u>: Md. Mobin Chowdhury</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Roll</u>: FH-118-012</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Lab</u> Group: C</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Batch</u> : 05</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Session</u>: 2023-24</em></h3><h4 style="text-align: left; font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0px;">  </h4><p style="text-align: left;"></p><p style="text-align: left;"></p><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">University of Dhaka</h2><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">Department of Physics</h2><p style="text-align: left;"></p><p style="text-align: left;">   </p><p style="text-align: left;"></p><p style="text-align: left;"></p><p style="text-align: center;"></p><p style="text-align: center;"></p>`,
+  'S-60': `<h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;"><strong>University of Dhaka</strong></h2><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;"><strong>Department of Physics</strong></h2><h3 style="text-align: center; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><strong>Lab Report</strong></h3><p style="text-align: center;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><strong><em><u>Experiment name:  </u></em></strong></h3><h4 style="text-align: left; font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0px;"><strong><em><u>jkjkjkasjdfkjadsfjkasdkfjasdfkjasdfjaskdljfkl;sdjflkasdjfklsdjfsdjfksdjfsldjfklsdjfklsdajflsdjfk</u></em></strong></h4><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><strong><em><u>Experiment Number :</u>   O5</em></strong></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><strong><em><u>Experiment Date:</u>  02/02/2025</em></strong></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: center; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><strong><em>Submitted by:</em></strong></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em>     Name: Md. Sadik Hossen</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em>    Roll: AE-118-060</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em>    Lab Group: C</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em>   Batch : 05</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em>   Session: 2023-24</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"></h3><p style="text-align: left;"></p><h1 style="text-align: left; font-size: 40px; font-weight: 800; color: black; display: block; margin: 0.5em 0px;">Stable Custom H1</h1><p style="text-align: left;">This editor is now print-optimized.yyyyy</p>`,
+
+
+
+
+  'R-66': `<h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">Lab Report</h2><p style="text-align: center;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Name of Experiment:  </u></em></h3><h4 style="text-align: left; font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0px;"><strong><em><u>jkjkjkasjdfkjadsfjkasdkfjasdfkjasdfjaskdljfkl;sdjflkasdjfklsdjfsdjfksdjfsldjfklsdjfklsdajflsdjfk</u></em></strong></h4><p style="text-align: left;"></p><p style="text-align: left;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Number of Experiment :</u>   O5</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Date of Experiment :</u>  02/02/2026</em></h3><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;"><em>Submitted By</em></h2><p style="text-align: center;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Name</u>: Raisa Alam</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Roll</u>: SK-118-066</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Lab</u> Group: C</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Batch</u> : 05</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Session</u>: 2023-24</em></h3><h4 style="text-align: left; font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0px;">  </h4><p style="text-align: left;"></p><p style="text-align: left;"></p><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">University of Dhaka</h2><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">Department of Physics</h2><p style="text-align: left;"></p><p style="text-align: left;">   </p><p style="text-align: left;"></p><p style="text-align: left;"></p><p style="text-align: center;"></p><p style="text-align: center;"></p>`
+};
 
 const HeadingOne = Node.create({
   name: 'headingOne', group: 'block', content: 'inline*',
@@ -65,6 +76,20 @@ const HeadingTwo = Node.create({
   parseHTML() { return [{ tag: 'h2' }] },
   renderHTML({ HTMLAttributes }) { return ['h2', mergeAttributes(HTMLAttributes, { style: 'font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0;' }), 0] },
   addCommands() { return { toggleHeadingTwo: () => ({ commands }) => commands.toggleNode(this.name, 'paragraph') } }
+});
+
+const HeadingThree = Node.create({
+  name: 'headingThree', group: 'block', content: 'inline*',
+  parseHTML() { return [{ tag: 'h3' }] },
+  renderHTML({ HTMLAttributes }) { return ['h3', mergeAttributes(HTMLAttributes, { style: 'font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0;' }), 0] },
+  addCommands() { return { toggleHeadingThree: () => ({ commands }) => commands.toggleNode(this.name, 'paragraph') } }
+});
+
+const HeadingFour = Node.create({
+  name: 'headingFour', group: 'block', content: 'inline*',
+  parseHTML() { return [{ tag: 'h4' }] },
+  renderHTML({ HTMLAttributes }) { return ['h4', mergeAttributes(HTMLAttributes, { style: 'font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0;' }), 0] },
+  addCommands() { return { toggleHeadingFour: () => ({ commands }) => commands.toggleNode(this.name, 'paragraph') } }
 });
 
 type StoredImage = {
@@ -112,16 +137,22 @@ const MenuButton = ({
   </button>
 );
 
-export default function TiptapEditor() {
+export default function TiptapEditor({ documentId, initialContent, onContentChange }: { documentId?: string, initialContent?: string, onContentChange?: (html: string) => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
+  const [showCoverMenu, setShowCoverMenu] = useState(false);
   const [showHtmlView, setShowHtmlView] = useState(false);
   const [htmlOutput, setHtmlOutput] = useState('');
   const [htmlDirty, setHtmlDirty] = useState(false);
   const [isMakingPdf, setIsMakingPdf] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
+
+  const insertCoverPage = (key: keyof typeof COVER_TEMPLATES) => {
+    editor.chain().focus().insertContentAt(0, COVER_TEMPLATES[key]).run();
+    setShowCoverMenu(false);
+  };
 
   const openImageDb = () =>
     new Promise<IDBDatabase>((resolve, reject) => {
@@ -183,20 +214,30 @@ export default function TiptapEditor() {
       db.close();
     }
   };
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
       Document, Paragraph, Text, History, Bold, Italic, Underline, Strike, BulletList, OrderedList, ListItem, Blockquote, Code, CodeBlock,
       Link.configure({ openOnClick: false }),
-      TableKitPlus.configure(),
+      TableKit.configure({
+        table: {
+          resizable: true,
+          cellMinWidth: 60,
+          lastColumnResizable: true,
+          HTMLAttributes: {
+            class: 'tiptap-full-width-table',
+            style: 'width: 100%; table-layout: fixed;',
+          },
+        },
+      }),
       TextAlign.configure({
-        types: ['paragraph', 'headingOne', 'headingTwo'],
+        types: ['paragraph', 'headingOne', 'headingTwo', 'headingThree', 'headingFour'],
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'left',
       }),
-      MathliveExtension, ChartExtension, HeadingOne, HeadingTwo,
+      MathliveExtension, ChartExtension, HeadingOne, HeadingTwo, HeadingThree, HeadingFour,
       ImagePlus.configure({
-        // Optional: custom options
         wrapperStyle: { cursor: 'pointer' },
         containerStyle: {
           padding: "25px",
@@ -214,10 +255,11 @@ export default function TiptapEditor() {
         marginRight: 50,
       }),
     ],
-    content: `<h1>Stable Custom H1</h1><p>This editor is now print-optimized.</p>`,
+    content: initialContent || `<h1>Stable Custom H1</h1><p>This editor is now print-optimized.</p>`,
   });
 
   const [, setUpdate] = useState(0);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     getAllStoredImages()
@@ -229,13 +271,29 @@ export default function TiptapEditor() {
 
   useEffect(() => {
     if (!editor) return;
+
+    let debounceTimer: NodeJS.Timeout;
+
     const h = () => {
       setUpdate(s => s + 1);
-      setHtmlOutput(editor.getHTML());
+      const html = editor.getHTML();
+      setHtmlOutput(html);
+
+      // Call the callback when content changes
+      if (onContentChange) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          onContentChange(html);
+        }, 1000);
+      }
     };
+
     editor.on('transaction', h);
-    return () => { editor.off('transaction', h); };
-  }, [editor]);
+    return () => {
+      editor.off('transaction', h);
+      clearTimeout(debounceTimer);
+    };
+  }, [editor, onContentChange]);
 
   if (!editor) return null;
 
@@ -578,6 +636,8 @@ return (
 
         <MenuButton onClick={() => editor.chain().focus().toggleHeadingOne().run()} isActive={editor.isActive('headingOne')} title="H1"><Heading1 size={18} /></MenuButton>
         <MenuButton onClick={() => editor.chain().focus().toggleHeadingTwo().run()} isActive={editor.isActive('headingTwo')} title="H2"><Heading2 size={18} /></MenuButton>
+        <MenuButton onClick={() => editor.chain().focus().toggleHeadingThree().run()} isActive={editor.isActive('headingThree')} title="H3"><Heading3 size={18} /></MenuButton>
+        <MenuButton onClick={() => editor.chain().focus().toggleHeadingFour().run()} isActive={editor.isActive('headingFour')} title="H4"><Heading4 size={18} /></MenuButton>
 
         <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
@@ -716,6 +776,32 @@ return (
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
+
+        <Popover.Root open={showCoverMenu} onOpenChange={setShowCoverMenu}>
+          <Popover.Trigger asChild>
+            <div className="relative">
+              <button
+                className="ml-2 p-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0"
+              >
+                <FileText size={18} /> <span className="text-sm font-bold">CoverPage</span>
+                <ChevronDown size={14} className={cn("ml-1 transition-transform", showCoverMenu && "rotate-180")} />
+              </button>
+            </div>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[120px] animate-in fade-in zoom-in duration-200">
+              {(Object.keys(COVER_TEMPLATES) as Array<keyof typeof COVER_TEMPLATES>).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => insertCoverPage(key)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md text-left transition-colors"
+                >
+                  {key}
+                </button>
+              ))}
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
       
         <button
           onClick={() => editor.chain().focus().insertChart().run()}
@@ -797,5 +883,7 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     headingOne: { toggleHeadingOne: () => ReturnType; }
     headingTwo: { toggleHeadingTwo: () => ReturnType; }
+    headingThree: { toggleHeadingThree: () => ReturnType; }
+    headingFour: { toggleHeadingFour: () => ReturnType; }
   }
 }

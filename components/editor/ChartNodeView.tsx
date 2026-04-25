@@ -87,7 +87,12 @@ const getDomain = (values: number[]) => {
   return [min - pad, max + pad] as const;
 };
 
+// Existing code...
+// The list of accepted model names are: linear, linear_y_mx, exponential, logarithmic, sine, cosine, tangent, power, logistic, polynomial, gaussian.
+// These are managed by chartModelOptions from './chartFitting'.
+
 export default function ChartNodeView({ node, updateAttributes, selected, deleteNode }: NodeViewProps) {
+// ... rest of the code
   const xData = useMemo(() => parseNumberArray(node.attrs.xData), [node.attrs.xData]);
   const yData = useMemo(() => parseNumberArray(node.attrs.yData), [node.attrs.yData]);
   const points: DataPoint[] = useMemo(() => 

@@ -2,6 +2,7 @@ import { levenbergMarquardt, type LevenbergMarquardtOptions, type ParameterizedF
 
 export type ChartModel =
   | 'linear'
+  | 'linear_y_mx'
   | 'exponential'
   | 'logarithmic'
   | 'sine'
@@ -49,6 +50,8 @@ const evaluateModel = (model: ChartModel, params: number[], x: number): number =
   switch (model) {
     case 'linear':
       return params[0] * x + params[1];
+    case 'linear_y_mx':
+      return params[0] * x;
     case 'exponential':
       return params[0] * safeExp(params[1] * x);
     case 'logarithmic':
@@ -95,6 +98,8 @@ const computeInitialValues = (points: DataPoint[], model: ChartModel): number[] 
   switch (model) {
     case 'linear':
       return [1, meanY];
+    case 'linear_y_mx':
+      return [1];
     case 'exponential':
       return [Math.max(amplitude, 1e-3), 0.01];
     case 'logarithmic':
@@ -139,6 +144,8 @@ const buildEquation = (model: ChartModel, params: number[]): string => {
   switch (model) {
     case 'linear':
       return `y = ${fmt(params[0])}x + ${fmt(params[1])}`;
+    case 'linear_y_mx':
+      return `y = ${fmt(params[0])}x`;
     case 'exponential':
       return `y = ${fmt(params[0])}e^(${fmt(params[1])}x)`;
     case 'logarithmic':
@@ -263,19 +270,22 @@ export const fitLeastSquares = (points: DataPoint[], model: ChartModel): FitResu
     };
   } catch {
     return {
-      ok: false,
-      error: 'Curve fitting failed for this model with the current data.',
-      equation: 'y = f(x)',
-      r2: null,
-      curve: [],
-      params: [],
-      points: normalized,
+      fitLeastSquares: (points: DataPoint[], model: ChartModel): FitResult => ({
+        ok: false,
+        error: 'Curve fitting failed for this model with the current data.',
+        equation: 'y = f(x)',
+        r2: null,
+        curve: [],
+        params: [],
+        points: normalized,
+      })
     };
   }
 };
 
 export const chartModelOptions: Array<{ value: ChartModel; label: string }> = [
-  { value: 'linear', label: 'Linear' },
+  { value: 'linear', label: 'Linear (y=mx+c)' },
+  { value: 'linear_y_mx', label: 'Linear (y=mx)' },
   { value: 'exponential', label: 'Exponential' },
   { value: 'logarithmic', label: 'Logarithmic' },
   { value: 'sine', label: 'Sine' },
@@ -286,4 +296,3 @@ export const chartModelOptions: Array<{ value: ChartModel; label: string }> = [
   { value: 'polynomial', label: 'Polynomial (deg 3)' },
   { value: 'gaussian', label: 'Gaussian' },
 ];
-

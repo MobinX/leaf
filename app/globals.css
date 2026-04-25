@@ -62,7 +62,24 @@ table {
   border-collapse: collapse !important;
   margin: 1em 0 !important;
   width: 100% !important;
+  table-layout: fixed !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
   border: 2px solid black !important;
+}
+
+.ProseMirror .tableWrapper,
+.tiptap-page .tableWrapper {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+}
+
+.ProseMirror .tiptap-full-width-table,
+.tiptap-page .tiptap-full-width-table {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
 }
 
 .ProseMirror td, 

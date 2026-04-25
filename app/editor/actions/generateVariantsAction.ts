@@ -62,6 +62,6 @@ export async function generateVariantsAction(formData: FormData): Promise<Action
 }
 
 function getBlobList(formData: FormData, key: string): Blob[] {
-  return formData.getAll(key).filter((value): value is Blob => value instanceof Blob);
+  return formData.getAll(key).filter((value) => typeof value === 'object') as Blob[];
 }
 

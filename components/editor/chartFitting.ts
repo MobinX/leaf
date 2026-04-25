@@ -270,15 +270,13 @@ export const fitLeastSquares = (points: DataPoint[], model: ChartModel): FitResu
     };
   } catch {
     return {
-      fitLeastSquares: (points: DataPoint[], model: ChartModel): FitResult => ({
-        ok: false,
-        error: 'Curve fitting failed for this model with the current data.',
-        equation: 'y = f(x)',
-        r2: null,
-        curve: [],
-        params: [],
-        points: normalized,
-      })
+      ok: false,
+      error: 'Curve fitting failed for this model with the current data.',
+      equation: 'y = f(x)',
+      r2: null,
+      curve: [],
+      params: [],
+      points: normalized,
     };
   }
 };

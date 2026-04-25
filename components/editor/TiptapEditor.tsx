@@ -159,6 +159,7 @@ export default function TiptapEditor({ documentId, initialContent, onContentChan
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
 
   const insertCoverPage = (key: keyof typeof COVER_TEMPLATES) => {
+    if (!editor) return;
     editor.chain().focus().insertContentAt(0, COVER_TEMPLATES[key]).run();
     setShowCoverMenu(false);
   };

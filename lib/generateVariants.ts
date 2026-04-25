@@ -20,7 +20,7 @@ const VariantOutputSchema = z.object({
   theory: z.array(z.string()).length(3),
   common: z.string(),
   results_discussion: z.array(z.string()).length(3),
-});
+}); 
 
 export type VariantOutput = z.infer<typeof VariantOutputSchema>;
 

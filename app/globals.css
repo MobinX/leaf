@@ -62,7 +62,6 @@ table {
   border-collapse: collapse !important;
   margin: 1em 0 !important;
   width: 100% !important;
-  table-layout: fixed !important;
   min-width: 100% !important;
   max-width: 100% !important;
   border: 2px solid black !important;
@@ -92,6 +91,23 @@ td, th {
   min-width: 1em !important;
   color: black !important;
   background-color: transparent !important;
+  position: relative !important;
+}
+
+.ProseMirror .column-resize-handle,
+.tiptap-page .column-resize-handle {
+  position: absolute !important;
+  top: 0 !important;
+  right: -2px !important;
+  bottom: -2px !important;
+  width: 4px !important;
+  background-color: #3b82f6 !important;
+  pointer-events: none !important;
+}
+
+.ProseMirror.resize-cursor,
+.ProseMirror.resize-cursor * {
+  cursor: col-resize !important;
 }
 
 .ProseMirror th, th {
@@ -128,6 +144,8 @@ td, th {
   color: #333 !important;
 }
 
+
+
 /* Mathfield styling */
 math-field {
   color: black !important;
@@ -161,6 +179,33 @@ math-field {
 .mathfield-shell[data-mathlive-focused='true'] math-field::part(menu-toggle),
 .mathfield-shell[data-mathlive-focused='true'] math-field::part(virtual-keyboard-toggle) {
   display: inline-flex !important;
+}
+
+
+
+math-field {
+  overflow: visible !important;
+  line-height: normal !important;
+  padding-top: 4px !important;
+  padding-bottom: 8px !important;
+  contain: none !important;
+  background: transparent !important;
+}
+math-field::part(container) {
+  overflow: visible !important;
+}
+math-field::part(content) {
+  overflow: visible !important;
+}
+math-field::part(virtual-keyboard-toggle) {
+  display: none !important;
+}
+.mathfield-shell {
+  overflow: visible !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  line-height: normal !important;
+  padding-bottom: 4px !important;
 }
 
 body {

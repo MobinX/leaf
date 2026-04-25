@@ -52,7 +52,15 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   BarChart3,
   FileText,
+  Copy,
 } from 'lucide-react';
+
+const LAB_REPORT_PROMPT_TEXT = `You need to write a lab report in basic html no css is allowed cause your html will be rendered by a markdown editor. That means the layout needs to be semantic and accessible using only standard HTML elements. you might use align attribute.You need to write Theory, apparatus, make table of data with caption and heading , write calculation with the help of math latex and write discussion. From the provided pdf learn the theory , discussion , calulation patter and how you should compose the whole document . then learn from the style , patter, order from the pdf. then see the extra images of data and data tables . keep in mind you only learn from the pdf file dont copy data from there. you need to use data from the images provided to you. based on the provided data image you need to write calculation . also you need to create a table and calculation for least square fitting. like formula for getting slop and intersection etc and calulation for that. how to write calculation learn from those pdf and write calculation based on provided images. then write result and discussion on fidings. discussion should be short and concise. 3 point.Now there are two special tag you will use one is <math>latext code </math> . use this to write math equation . remeber only use to write equation . for multi line you may use multiple <math> with line break.now the <chart data-xdata="[5,344]" data-ydata="[3,44]" data-model="linear_y_mx" data-x-label="X" data-y-label="Y" data-width="100%" data-height="70vh" data-alignment="center"></chart> this is a just example this way you will give the corresponding data to it and it will automatically use that data to draw leassquare fittted graph. keep in mind it will do every thing by it self . so will only give the raw x data , y data. set labels appropriately . do every thing correctly. give the htmlYou need to write a lab report in basic html no css is allowed cause your html will be rendered by a markdown editor. That means the layout needs to be semantic and accessible using only standard HTML elements. you might use align attribute.You need to write Theory, apparatus, make table of data with caption and heading , write calculation with the help of math latex and write discussion. From the provided pdf learn the theory , discussion , calulation patter and how you should compose the whole document . then learn from the style , patter, order from the pdf. then see the extra images of data and data tables . keep in mind you only learn from the pdf file dont copy data from there. you need to use data from the images provided to you. based on the provided data image you need to write calculation . also you need to create a table and calculation for least square fitting. like formula for getting slop and intersection etc and calulation for that. how to write calculation learn from those pdf and write calculation based on provided images. then write result and discussion on fidings. discussion should be short and concise. 3 point.Now there are two special tag you will use one is <math>latext code </math> . use this to write math equation . remeber only use to write equation . for multi line you may use multiple <math> with line break.now the <chart data-xdata="[5,344]" data-ydata="[3,44]" data-model="linear_y_mx" data-x-label="X" data-y-label="Y" data-width="100%" data-height="70vh" data-alignment="center"></chart> this is a just example this way you will give the corresponding data to it and it will automatically use that data to draw leassquare fittted graph. keep in mind it will do every thing by it self . so will only give the raw x data , y data. set labels appropriately . do every thing correctly. give the html
+some extra info you must keep remeber,
+1) THEORY always CONTAIN DRIVATION DEFINATION AND OVERAL DESCRIPTION
+2) BEFORE GRAPH , GIVE H3 HEADER OF GRAPH
+AFTER GRAPH GIVE ITALIC HEADER OF FIGURE 2, LIKE DESCRIPTION
+`;
 
 const COVER_TEMPLATES = {
   'M-012': `<h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">Lab Report</h2><p style="text-align: center;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Experiment name:  </u></em></h3><h4 style="text-align: left; font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0px;"><strong><em><u>jkjkjkasjdfkjadsfjkasdkfjasdfkjasdfjaskdljfkl;sdjflkasdjfklsdjfsdjfksdjfsldjfklsdjfklsdajflsdjfk</u></em></strong></h4><p style="text-align: left;"></p><p style="text-align: left;"></p><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Experiment Number :</u>   O5</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Experiment Date:</u>  02/02/2026</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Name</u>: Md. Mobin Chowdhury</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Roll</u>: FH-118-012</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Lab</u> Group: C</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Batch</u> : 05</em></h3><h3 style="text-align: left; font-size: 24px; font-weight: 700; color: black; display: block; margin: 0.3em 0px;"><em><u>Session</u>: 2023-24</em></h3><h4 style="text-align: left; font-size: 20px; font-weight: 700; color: black; display: block; margin: 0.2em 0px;">  </h4><p style="text-align: left;"></p><p style="text-align: left;"></p><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">University of Dhaka</h2><h2 style="text-align: center; font-size: 30px; font-weight: 700; color: black; display: block; margin: 0.4em 0px;">Department of Physics</h2><p style="text-align: left;"></p><p style="text-align: left;">   </p><p style="text-align: left;"></p><p style="text-align: left;"></p><p style="text-align: center;"></p><p style="text-align: center;"></p>`,
@@ -146,6 +154,7 @@ export default function TiptapEditor({ documentId, initialContent, onContentChan
   const [htmlOutput, setHtmlOutput] = useState('');
   const [htmlDirty, setHtmlDirty] = useState(false);
   const [isMakingPdf, setIsMakingPdf] = useState(false);
+  const [isPromptCopied, setIsPromptCopied] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
 
@@ -217,6 +226,7 @@ export default function TiptapEditor({ documentId, initialContent, onContentChan
 
   const editor = useEditor({
     immediatelyRender: false,
+    editable: true,
     extensions: [
       Document, Paragraph, Text, History, Bold, Italic, Underline, Strike, BulletList, OrderedList, ListItem, Blockquote, Code, CodeBlock,
       Link.configure({ openOnClick: false }),
@@ -227,7 +237,7 @@ export default function TiptapEditor({ documentId, initialContent, onContentChan
           lastColumnResizable: true,
           HTMLAttributes: {
             class: 'tiptap-full-width-table',
-            style: 'width: 100%; table-layout: fixed;',
+            style: 'width: 100%;',
           },
         },
       }),
@@ -424,7 +434,16 @@ const getPageRanges = (editorRoot: HTMLElement) => {
   return ranges;
 };
 
-const makePdf = async () => {
+const sanitizePdfFileName = (name: string) => {
+  const sanitized = name
+    .trim()
+    .replace(/\.pdf$/i, '')
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '-')
+    .replace(/\s+/g, ' ');
+  return sanitized || 'leaf-document';
+};
+
+const makePdf = async (fileName: string) => {
   if (!editor || isMakingPdf) return;
 
   setIsMakingPdf(true);
@@ -471,12 +490,9 @@ const makePdf = async () => {
         line-height: normal !important;
         padding-bottom: 4px !important;
       }
-      /* Ensure parent containers don't clip */
-      .ProseMirror p, .ProseMirror div {
-        overflow: visible !important;
-      }
+
     `;
-    document.head.appendChild(styleEl);
+//     document.head.appendChild(styleEl);
 
     const pageRanges = getPageRanges(editorRoot);
     const scale = 2;
@@ -489,7 +505,7 @@ const makePdf = async () => {
       backgroundColor: '#ffffff',
     });
 
-    document.head.removeChild(styleEl);
+//     document.head.removeChild(styleEl);
 
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -541,12 +557,39 @@ const makePdf = async () => {
       );
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    pdf.save(`leaf-document-${timestamp}.pdf`);
+    pdf.save(`${sanitizePdfFileName(fileName)}.pdf`);
   } catch (error) {
     console.error('PDF generation failed', error);
   } finally {
     setIsMakingPdf(false);
+  }
+};
+
+const handlePrintClick = () => {
+  if (isMakingPdf) return;
+  const defaultName = sanitizePdfFileName(documentId || 'leaf-document');
+  const input = window.prompt('Enter PDF file name', defaultName);
+  if (input === null) return;
+  const fileName = sanitizePdfFileName(input);
+  void makePdf(fileName);
+};
+
+const copyLabPrompt = async () => {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(LAB_REPORT_PROMPT_TEXT);
+    } else {
+      const temp = document.createElement('textarea');
+      temp.value = LAB_REPORT_PROMPT_TEXT;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+    }
+    setIsPromptCopied(true);
+    window.setTimeout(() => setIsPromptCopied(false), 1500);
+  } catch (error) {
+    console.error('Failed to copy lab prompt text', error);
   }
 };
 
@@ -616,7 +659,7 @@ return (
         }
       `}} />
 
-      <div className="flex-none  w-full bg-white border-b p-1.5 pl-[60px] flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
+      <div className="flex-none  w-full bg-white border-b p-1.5  flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
         <MenuButton onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undo size={18} /></MenuButton>
         <MenuButton onClick={() => editor.chain().focus().redo().run()} title="Redo"><Redo size={18} /></MenuButton>
         <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
@@ -803,19 +846,7 @@ return (
           </Popover.Portal>
         </Popover.Root>
       
-        <button
-          onClick={() => editor.chain().focus().insertChart().run()}
-          className="ml-2 p-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0"
-        >
-          <BarChart3 size={18} /> <span className="text-sm font-bold">Chart</span>
-        </button>
 
-        <button
-          onClick={() => editor.chain().focus().insertMath().run()}
-          className="ml-2 p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0"
-        >
-          <Sigma size={18} /> <span className="text-sm font-bold">Math</span>
-        </button>
         <button
           onClick={() => {
             if (!showHtmlView) {
@@ -844,19 +875,47 @@ return (
           <FileCode2 size={18} />
           <span className="text-sm font-bold">{showHtmlView ? 'Editor' : 'HTML'}</span>
         </button>
-
-        <div className="flex-1" />
+        <button
+          onClick={() => void copyLabPrompt()}
+          className={cn(
+            "ml-2 p-2 rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0",
+            isPromptCopied
+              ? "bg-green-600 text-white hover:bg-green-700"
+              : "bg-amber-600 text-white hover:bg-amber-700",
+          )}
+          title="Copy lab report prompt"
+        >
+          <Copy size={18} />
+          <span className="text-sm font-bold">{isPromptCopied ? 'Copied' : 'Copy Prompt'}</span>
+        </button>
 
         <button
-          onClick={() => void makePdf()}
-          disabled={isMakingPdf}
-          className={cn(
-            "p-2 text-white rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0 ml-4",
-            isMakingPdf ? "bg-gray-500 cursor-not-allowed" : "bg-gray-800 hover:bg-black",
-          )}
+        onClick={handlePrintClick}
+        disabled={isMakingPdf}
+        className={cn(
+          "p-2 text-white rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0 ml-4",
+          isMakingPdf ? "bg-gray-500 cursor-not-allowed" : "bg-gray-800 hover:bg-black",
+        )}
         >
-          <Printer size={18} /> <span className="text-sm font-bold">{isMakingPdf ? 'Building PDF…' : 'Print'}</span>
+        <Printer size={18} /> <span className="text-sm font-bold">{isMakingPdf ? 'Building PDF…' : 'Print'}</span>
         </button>
+
+        <button
+        onClick={() => editor.chain().focus().insertMath().run()}
+        className="ml-2 p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0"
+        >
+        <Sigma size={18} /> <span className="text-sm font-bold">Math</span>
+        </button>
+
+        <button
+        onClick={() => editor.chain().focus().insertChart().run()}
+        className="ml-2 p-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0"
+        >
+        <BarChart3 size={18} /> <span className="text-sm font-bold">Chart</span>
+        </button>
+
+
+
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 flex flex-col items-center tiptap-page-container">

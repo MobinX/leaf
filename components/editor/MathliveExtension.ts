@@ -13,8 +13,7 @@ export const MathliveExtension = Node.create({
       latex: {
         default: '',
         parseHTML: (element) => {
-          // If it's <math>latex</math>, element.textContent is what we want
-          return element.textContent || '';
+          return element.getAttribute('data-latex') || element.textContent || '';
         },
       },
     };
@@ -25,12 +24,14 @@ export const MathliveExtension = Node.create({
       {
         tag: 'math',
       },
+      {
+        tag: 'math-field',
+      }
     ];
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    // This defines how it is saved/exported to HTML
-    return ['math', mergeAttributes(HTMLAttributes), node.attrs.latex || ''];
+    return ['math', mergeAttributes(HTMLAttributes, { 'data-latex': node.attrs.latex || '' }), node.attrs.latex || ''];
   },
 
   addNodeView() {

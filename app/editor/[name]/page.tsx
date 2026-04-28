@@ -80,7 +80,6 @@ export default function DynamicEditorPage() {
           className={tab.id === document.activeTabId ? 'block' : 'hidden'}
         >
           <TiptapEditor 
-            documentId={documentName}
             initialContent={tab.content}
             onContentChange={(content) => handleContentChange(tab.id, content)}
           />

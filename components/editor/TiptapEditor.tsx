@@ -2,8 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent, Node, mergeAttributes } from '@tiptap/react';
-import { domToCanvas } from 'modern-screenshot';
-import { jsPDF } from 'jspdf';
 import { Document } from '@tiptap/extension-document';
 import { Paragraph } from '@tiptap/extension-paragraph';
 import { Text } from '@tiptap/extension-text';
@@ -162,7 +160,7 @@ const MenuButton = ({
   </button>
 );
 
-export default function TiptapEditor({ documentId, initialContent, onContentChange }: { documentId?: string, initialContent?: string, onContentChange?: (html: string) => void }) {
+export default function TiptapEditor({ initialContent, onContentChange }: { initialContent?: string, onContentChange?: (html: string) => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
@@ -170,7 +168,6 @@ export default function TiptapEditor({ documentId, initialContent, onContentChan
   const [showHtmlView, setShowHtmlView] = useState(false);
   const [htmlOutput, setHtmlOutput] = useState('');
   const [htmlDirty, setHtmlDirty] = useState(false);
-  const [isMakingPdf, setIsMakingPdf] = useState(false);
   const [isPromptCopied, setIsPromptCopied] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
@@ -286,6 +283,18 @@ export default function TiptapEditor({ documentId, initialContent, onContentChan
     content: initialContent || `<h1>Stable Custom H1</h1><p>This editor is now print-optimized.</p>`,
   });
 
+  // Sync initialContent if it changes from outside
+  useEffect(() => {
+    if (editor && initialContent !== undefined && initialContent !== editor.getHTML()) {
+      // Only sync if the editor is empty or if we really want to force update
+      // For now, let's just sync if it's different and we are at the beginning
+      const currentHtml = editor.getHTML();
+      if (currentHtml === '<p></p>' || currentHtml === '<h1>Stable Custom H1</h1><p>This editor is now print-optimized.</p>') {
+        editor.commands.setContent(initialContent);
+      }
+    }
+  }, [editor, initialContent]);
+
   const [, setUpdate] = useState(0);
 
   useEffect(() => {
@@ -326,6 +335,26 @@ export default function TiptapEditor({ documentId, initialContent, onContentChan
   if (!editor) return null;
 
 
+const insertHeadingAfterCurrentTable = () => {
+  const { $from } = editor.state.selection;
+  let tableDepth = -1;
+
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    if ($from.node(depth).type.name === 'table') {
+      tableDepth = depth;
+      break;
+    }
+  }
+
+  if (tableDepth === -1) {
+    editor.chain().focus().insertContent({ type: 'headingThree' }).run();
+    return;
+  }
+
+  const insertPos = $from.after(tableDepth);
+  editor.chain().focus().insertContentAt(insertPos, { type: 'headingThree' }).run();
+};
+
 const tableActions = [
   { label: 'Col Before', icon: <BetweenVerticalStartIcon size={16} />, onClick: () => editor.chain().focus().addColumnBefore().run() },
   { label: 'Col After', icon: <BetweenVerticalStartIcon size={16} className="rotate-180" />, onClick: () => editor.chain().focus().addColumnAfter().run() },
@@ -343,6 +372,7 @@ const tableActions = [
   { label: 'Fix', icon: <Wrench size={16} />, onClick: () => editor.chain().focus().fixTables().run() },
   { label: 'Prev', icon: <ArrowLeft size={16} />, onClick: () => editor.chain().focus().goToPreviousCell().run() },
   { label: 'Next', icon: <ArrowRight size={16} />, onClick: () => editor.chain().focus().goToNextCell().run() },
+  { label: 'Insert after table', icon: <Heading3 size={16} />, onClick: insertHeadingAfterCurrentTable },
   { label: 'Del Table', icon: <Trash2 size={16} className="text-red-500" />, onClick: () => editor.chain().focus().deleteTable().run() },
 ];
 
@@ -406,190 +436,22 @@ const onUploadImage: React.ChangeEventHandler<HTMLInputElement> = (event) => {
   event.target.value = '';
 };
 
-const getPageRanges = (editorRoot: HTMLElement) => {
-  // Look for the pagination wrapper
-  const paginationElement = editorRoot.querySelector('[data-rm-pagination]');
-  if (!paginationElement) {
-    return [{ startY: 0, endY: editorRoot.scrollHeight }];
-  }
-
-  // Get all breaker elements (page separators)
-  const breakers = Array.from(
-    paginationElement.querySelectorAll<HTMLElement>('.breaker')
-  );
-
-  if (breakers.length === 0) {
-    return [{ startY: 0, endY: editorRoot.scrollHeight }];
-  }
-
-  const rootRect = editorRoot.getBoundingClientRect();
-  const ranges: Array<{ startY: number; endY: number }> = [];
-  
-  let currentStartY = 0;
-
-  breakers.forEach((breaker, index) => {
-    // Breaker marks the end of a page; get its position
-    const rect = breaker.getBoundingClientRect();
-    const breakerEndY = rect.top - rootRect.top;
-    
-    // Only add if this page has content
-    if (breakerEndY > currentStartY) {
-      ranges.push({ startY: currentStartY, endY: breakerEndY });
-      currentStartY = breakerEndY + rect.height; // Next page starts after the breaker
-    }
-  });
-
-  // Add the last page (after the last breaker to the end)
-  if (currentStartY < editorRoot.scrollHeight) {
-    ranges.push({ startY: currentStartY, endY: editorRoot.scrollHeight });
-  }
-
-  // Fallback if nothing detected
-  if (ranges.length === 0) {
-    return [{ startY: 0, endY: editorRoot.scrollHeight }];
-  }
-
-  return ranges;
-};
-
-const sanitizePdfFileName = (name: string) => {
-  const sanitized = name
-    .trim()
-    .replace(/\.pdf$/i, '')
-    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '-')
-    .replace(/\s+/g, ' ');
-  return sanitized || 'leaf-document';
-};
-
-const makePdf = async (fileName: string) => {
-  if (!editor || isMakingPdf) return;
-
-  setIsMakingPdf(true);
-  try {
-//     if (showHtmlView && htmlDirty) {
-//       const applied = editor.commands.setContent(htmlOutput);
-//       if (!applied) {
-//         console.error('Failed to apply HTML edits before PDF export.');
-//         return;
-//       }
-//       setHtmlDirty(false);
-//     }
-
-    const editorRoot = editor.view.dom as HTMLElement;
-    
-    // Add temporary style to help modern-screenshot  
-    const styleEl = document.createElement('style');
-    styleEl.textContent = `
-      /* Help modern-screenshot render without errors */
-      * {
-        filter: drop-shadow(none) !important;
-      }
-      math-field {
-        overflow: visible !important;
-        line-height: normal !important;
-        padding-top: 4px !important;
-        padding-bottom: 8px !important;
-        contain: none !important;
-        background: transparent !important;
-      }
-      math-field::part(container) {
-        overflow: visible !important;
-      }
-      math-field::part(content) {
-        overflow: visible !important;
-      }
-      math-field::part(virtual-keyboard-toggle) {
-        display: none !important;
-      }
-      .mathfield-shell {
-        overflow: visible !important;
-        display: inline-block !important;
-        vertical-align: middle !important;
-        line-height: normal !important;
-        padding-bottom: 4px !important;
-      }
-
-    `;
-//     document.head.appendChild(styleEl);
-
-    const pageRanges = getPageRanges(editorRoot);
-    const scale = 2;
-
-    console.log('Page ranges detected:', pageRanges);
-
-    // Using modern-screenshot to capture the editor content
-    const fullCanvas = await domToCanvas(editorRoot, {
-      scale,
-      backgroundColor: '#ffffff',
-    });
-
-//     document.head.removeChild(styleEl);
-
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-
-    for (let index = 0; index < pageRanges.length; index += 1) {
-      const { startY, endY } = pageRanges[index];
-      const cropTop = Math.max(0, Math.floor(startY * scale));
-      const cropHeight = Math.max(1, Math.floor((endY - startY) * scale));
-
-      const pageCanvas = document.createElement('canvas');
-      pageCanvas.width = fullCanvas.width;
-      pageCanvas.height = cropHeight;
-
-      const pageContext = pageCanvas.getContext('2d');
-      if (!pageContext) {
-        console.error('Could not create 2D context for PDF page rendering.');
-        continue;
-      }
-
-      pageContext.drawImage(
-        fullCanvas,
-        0,
-        cropTop,
-        fullCanvas.width,
-        cropHeight,
-        0,
-        0,
-        fullCanvas.width,
-        cropHeight,
-      );
-
-      if (index > 0) {
-        pdf.addPage();
-      }
-
-      // Scale image to fit PDF width while preserving aspect ratio
-      const imgWidthMm = pdfWidth;
-      const imgHeightMm = (cropHeight / fullCanvas.width) * imgWidthMm;
-
-      pdf.addImage(
-        pageCanvas.toDataURL('image/jpeg', 0.95),
-        'JPEG',
-        0,
-        0,
-        imgWidthMm,
-        imgHeightMm,
-        undefined,
-        'FAST'
-      );
-    }
-
-    pdf.save(`${sanitizePdfFileName(fileName)}.pdf`);
-  } catch (error) {
-    console.error('PDF generation failed', error);
-  } finally {
-    setIsMakingPdf(false);
-  }
-};
-
 const handlePrintClick = () => {
-  if (isMakingPdf) return;
-  const defaultName = sanitizePdfFileName(documentId || 'leaf-document');
-  const input = window.prompt('Enter PDF file name', defaultName);
-  if (input === null) return;
-  const fileName = sanitizePdfFileName(input);
-  void makePdf(fileName);
+  if (showHtmlView) {
+    if (htmlDirty) {
+      const applied = editor.commands.setContent(htmlOutput);
+      if (!applied) {
+        console.error('Failed to apply HTML changes before printing.');
+        return;
+      }
+      setHtmlDirty(false);
+    }
+    setShowHtmlView(false);
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+    return;
+  }
+
+  window.print();
 };
 
 const copyLabPrompt = async () => {
@@ -632,11 +494,29 @@ return (
             size: A4;
             margin: 0;
           }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          #printableArea,
+          #printableArea * {
+            visibility: visible !important;
+          }
           
           body, html, #__next, main {
             background: white !important;
             height: auto !important;
             overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          [data-theme="light"] {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            display: block !important;
           }
 
           .no-print {
@@ -651,6 +531,16 @@ return (
             margin: 0 !important;
           }
 
+          #printableArea {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+
           .flex-1 {
             overflow: visible !important;
             padding: 0 !important;
@@ -660,8 +550,28 @@ return (
           .tiptap-page {
             box-shadow: none !important;
             margin: 0 !important;
-            page-break-after: always !important;
             border: none !important;
+          }
+
+          #printableArea .rm-with-pagination {
+            box-shadow: none !important;
+            border: none !important;
+            background: #fff !important;
+          }
+
+          #printableArea #pages .rm-pagination-gap {
+            height: 0 !important;
+            border: 0 !important;
+          }
+
+          #printableArea #pages .rm-page-break .breaker {
+            break-after: page !important;
+            page-break-after: always !important;
+          }
+
+          #printableArea #pages .rm-page-break:last-child .breaker {
+            break-after: auto !important;
+            page-break-after: auto !important;
           }
 
           /* Ensure black text and visible borders on print */
@@ -909,13 +819,9 @@ return (
 
         <button
         onClick={handlePrintClick}
-        disabled={isMakingPdf}
-        className={cn(
-          "p-2 text-white rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0 ml-4",
-          isMakingPdf ? "bg-gray-500 cursor-not-allowed" : "bg-gray-800 hover:bg-black",
-        )}
+        className="p-2 text-white rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0 ml-4 bg-gray-800 hover:bg-black"
         >
-        <Printer size={18} /> <span className="text-sm font-bold">{isMakingPdf ? 'Building PDF…' : 'Print'}</span>
+        <Printer size={18} /> <span className="text-sm font-bold">Print</span>
         </button>
 
         <button
@@ -936,7 +842,7 @@ return (
 
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 flex flex-col items-center tiptap-page-container">
+      <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 flex flex-col items-center tiptap-page-container">
         <div className="w-full max-w-[21cm]">
           {showHtmlView ? (
             <textarea

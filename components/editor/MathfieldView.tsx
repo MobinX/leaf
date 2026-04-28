@@ -12,17 +12,23 @@ interface MathfieldElement extends HTMLElement {
 export default function MathfieldView({ node, updateAttributes, selected, editor }: NodeViewProps) {
   const mfRef = useRef<MathfieldElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [isMathliveLoaded, setIsMathliveLoaded] = useState(false);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
-    let disposed = false;
-
-    // Import mathlive on client side only
+    
+    // Import mathlive on client side
     import('mathlive').then(() => {
-      if (disposed || !mfRef.current) return;
+      setIsMathliveLoaded(true);
+      if (!mfRef.current) return;
 
       const mathField = mfRef.current;
-      mathField.value = node.attrs.latex || '';
+      
+      // Ensure the value is set after mathlive is loaded
+      if (mathField.value !== node.attrs.latex) {
+        mathField.value = node.attrs.latex || '';
+      }
+
       const setTogglesVisible = (visible: boolean) => {
         const toggles = mathField.shadowRoot?.querySelector('.ML__toggles') as HTMLElement | null;
         if (!toggles) return;
@@ -33,6 +39,7 @@ export default function MathfieldView({ node, updateAttributes, selected, editor
         const target = e.target as MathfieldElement;
         updateAttributes({ latex: target.value });
       };
+
       const handleKeyDown = (e: KeyboardEvent) => {
         const key = e.key.toLowerCase();
         const hasPrimary = e.metaKey || e.ctrlKey;
@@ -63,9 +70,11 @@ export default function MathfieldView({ node, updateAttributes, selected, editor
       mathField.addEventListener('focusout', handleFocusOut);
       setTogglesVisible(false);
 
-      // Focus when created if it's empty (likely just inserted)
-      if (!node.attrs.latex) {
-        setTimeout(() => mathField.focus(), 50);
+      // Focus when created if it's empty and editor is focused (likely just inserted)
+      if (!node.attrs.latex && editor.isFocused) {
+        setTimeout(() => {
+          if (mfRef.current) mfRef.current.focus();
+        }, 50);
       }
 
       cleanup = () => {
@@ -77,17 +86,17 @@ export default function MathfieldView({ node, updateAttributes, selected, editor
     });
 
     return () => {
-      disposed = true;
       cleanup?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sync value when node attributes change, but only if mathlive is ready
   useEffect(() => {
-    if (mfRef.current && mfRef.current.value !== node.attrs.latex) {
+    if (isMathliveLoaded && mfRef.current && mfRef.current.value !== node.attrs.latex) {
       mfRef.current.value = node.attrs.latex || '';
     }
-  }, [node.attrs.latex]);
+  }, [node.attrs.latex, isMathliveLoaded]);
 
   return (
     <NodeViewWrapper
@@ -96,6 +105,7 @@ export default function MathfieldView({ node, updateAttributes, selected, editor
     >
       <math-field
         ref={mfRef}
+        value={node.attrs.latex || ''}
         style={{
           border: 'none',
           padding: '2px 4px',
@@ -106,7 +116,6 @@ export default function MathfieldView({ node, updateAttributes, selected, editor
           display: 'inline-block',
           verticalAlign: 'middle'
         }}
-        // This is the attribute to show keyboard on focus
         virtual-keyboard-mode="onfocus"
       />
     </NodeViewWrapper>

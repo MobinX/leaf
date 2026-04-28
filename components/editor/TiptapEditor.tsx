@@ -22,7 +22,9 @@ import { CodeBlock } from '@tiptap/extension-code-block';
 import { PaginationPlus, PAGE_SIZES } from 'tiptap-pagination-plus';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Mathematics } from '@tiptap/extension-mathematics';
+import { TextStyle } from '@tiptap/extension-text-style';
 import { ChartExtension } from './ChartExtension';
+import { FontSizeExtension } from './FontSizeExtension';
 import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
 import {
@@ -53,7 +55,12 @@ import {
   Copy,
 } from 'lucide-react';
 
-const LAB_REPORT_PROMPT_TEXT = `You need to write a lab report in basic html no css is allowed cause your html will be rendered by a markdown editor. That means the layout needs to be semantic and accessible using only standard HTML elements. you might use align attribute.You need to write Theory, apparatus, make table of data with caption and heading , write calculation with the help of math latex and write discussion. From the provided pdf learn the theory , discussion , calulation patter and how you should compose the whole document . then learn from the style , patter, order from the pdf. then see the extra images of data and data tables . keep in mind you only learn from the pdf file dont copy data from there. you need to use data from the images provided to you. based on the provided data image you need to write calculation . also you need to create a table and calculation for least square fitting. like formula for getting slop and intersection etc and calulation for that. how to write calculation learn from those pdf and write calculation based on provided images. then write result and discussion on fidings. discussion should be short and concise. 3 point.Now there are two special tag you will use one is <math>latext code </math> . use this to write math equation . remeber only use to write equation . for multi line you may use multiple <math> with line break.
+interface MathfieldElement extends HTMLElement {
+  value: string;
+  focus: () => void;
+}
+
+const LAB_REPORT_PROMPT_TEXT = `You need to write a lab report in basic html no css is allowed cause your html will be rendered by a markdown editor. That means the layout needs to be semantic and accessible using only standard HTML elements. you might use align attribute.You need to write Theory, apparatus, make table of data with caption and heading , write calculation with the help of math latex and write discussion. From the provided pdf learn the theory , discussion , calulation patter and how you should compose the whole document . then learn from the style , patter, order from the pdf. then see the extra images of data and data tables . keep in mind you only learn from the pdf file dont copy data from there. you need to use data from the images provided to you. based on the provided data image you need to write calculation . also you need to create a table and calculation for least square fitting. like formula for getting slop and intersection etc and calulation for that. how to write calculation learn from those pdf and write calculation based on provided images. then write result and discussion on fidings. discussion should be short and concise. 3 point.Now there are two special tag you will use one is <math>latex code</math> . use this to write math equation only . for multi line you may use multiple <math> with line break.
 
 CHART TAG FORMAT (Support multiple datasets):
 <chart data-datasets='[{"id":"ds1","xData":[1,2,3],"yData":[2,4,6],"model":"linear","label":"Dataset1"},{"id":"ds2","xData":[1,2,3],"yData":[1.5,3.5,5.5],"model":"linear","label":"Dataset2"}]' data-x-label="X" data-y-label="Y" data-width="100%" data-height="70vh" data-alignment="center"></chart>
@@ -189,26 +196,74 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
   const [mathEditorLatex, setMathEditorLatex] = useState('');
   const [mathEditorPos, setMathEditorPos] = useState<number | null>(null);
   const [mathEditorType, setMathEditorType] = useState<'inline' | 'block'>('inline');
-  const mathEditorInputRef = useRef<HTMLTextAreaElement>(null);
+  const mathFieldRef = useRef<MathfieldElement>(null);
+  const mathliveReadyRef = useRef(false);
+  const mathEditorLatexRef = useRef('');
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
 
   const confirmMathEdit = () => {
-    if (!mathEditorLatex.trim() || !editor) return;
+    const latexValue = mathFieldRef.current?.value ?? mathEditorLatex;
+    if (!latexValue.trim() || !editor) return;
     if (mathEditorPos !== null) {
       if (mathEditorType === 'inline') {
-        editor.chain().focus().updateInlineMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
+        editor.chain().focus().updateInlineMath({ latex: latexValue, pos: mathEditorPos }).run();
       } else {
-        editor.chain().focus().updateBlockMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
+        editor.chain().focus().updateBlockMath({ latex: latexValue, pos: mathEditorPos }).run();
       }
     } else {
       if (mathEditorType === 'inline') {
-        editor.chain().focus().insertInlineMath({ latex: mathEditorLatex }).run();
+        editor.chain().focus().insertInlineMath({ latex: latexValue }).run();
       } else {
-        editor.chain().focus().insertBlockMath({ latex: mathEditorLatex }).run();
+        editor.chain().focus().insertBlockMath({ latex: latexValue }).run();
       }
     }
     setShowMathEditor(false);
   };
+
+  useEffect(() => {
+    mathEditorLatexRef.current = mathEditorLatex;
+  }, [mathEditorLatex]);
+
+  useEffect(() => {
+    if (!showMathEditor) {
+      mathliveReadyRef.current = false;
+      return;
+    }
+
+    let cleanup: (() => void) | undefined;
+
+    import('mathlive').then(() => {
+      mathliveReadyRef.current = true;
+      const mathField = mathFieldRef.current;
+      if (!mathField) return;
+
+      mathField.value = mathEditorLatexRef.current || '';
+
+      const handleInput = (event: Event) => {
+        const target = event.target as MathfieldElement;
+        setMathEditorLatex(target.value);
+      };
+
+      mathField.addEventListener('input', handleInput);
+
+      setTimeout(() => mathField.focus(), 0);
+
+      cleanup = () => {
+        mathField.removeEventListener('input', handleInput);
+      };
+    });
+
+    return () => {
+      cleanup?.();
+    };
+  }, [showMathEditor]);
+
+  useEffect(() => {
+    if (!showMathEditor || !mathliveReadyRef.current || !mathFieldRef.current) return;
+    if (mathFieldRef.current.value !== mathEditorLatex) {
+      mathFieldRef.current.value = mathEditorLatex || '';
+    }
+  }, [mathEditorLatex, showMathEditor]);
 
   const insertCoverPage = (key: keyof typeof COVER_TEMPLATES) => {
     if (!editor) return;
@@ -281,7 +336,7 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
     immediatelyRender: false,
     editable: true,
     extensions: [
-      Document, Paragraph, Text, History, Bold, Italic, Underline, Strike, BulletList, OrderedList, ListItem, Blockquote, Code, CodeBlock,
+      Document, Paragraph, Text, History, Bold, Italic, Underline, Strike, TextStyle, FontSizeExtension, BulletList, OrderedList, ListItem, Blockquote, Code, CodeBlock,
       Link.configure({ openOnClick: false }),
       TableKit.configure({
         table: {
@@ -987,13 +1042,12 @@ return (
                 >Block</button>
               </div>
             </div>
-            <textarea
-              ref={mathEditorInputRef}
+            <math-field
+              ref={mathFieldRef}
               value={mathEditorLatex}
-              onChange={(e) => setMathEditorLatex(e.target.value)}
-              autoFocus
-              placeholder="Enter LaTeX, e.g. E = mc^2"
-              className="w-full h-28 font-mono text-sm border border-gray-300 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base outline-none focus:ring-2 focus:ring-blue-400"
+              style={{ minHeight: '120px' }}
+              virtual-keyboard-mode="onfocus"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();
@@ -1033,6 +1087,18 @@ return (
       )}
     </div>
   );
+}
+
+declare module 'react' {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements {
+      'math-field': React.DetailedHTMLProps<React.HTMLAttributes<MathfieldElement>, MathfieldElement> & {
+        value?: string;
+        'virtual-keyboard-mode'?: string;
+      };
+    }
+  }
 }
 
 declare module '@tiptap/core' {

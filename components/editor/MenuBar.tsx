@@ -73,6 +73,9 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
 
   if (!editor) return <div className="h-[50px] bg-gray-50 animate-pulse" />;
 
+  const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
+  const currentFontSize = editor.getAttributes('textStyle').fontSize ?? '';
+
   const addLink = () => {
     const url = window.prompt('Enter URL');
     if (url) {
@@ -144,6 +147,27 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
       >
         <Heading2 size={18} />
       </MenuButton>
+
+      <select
+        value={currentFontSize}
+        onChange={(event) => {
+          const value = event.target.value;
+          if (!value) {
+            editor.chain().focus().unsetFontSize().run();
+            return;
+          }
+          editor.chain().focus().setFontSize(value).run();
+        }}
+        title="Font size"
+        className="h-[36px] rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">Font size</option>
+        {fontSizes.map((size) => (
+          <option key={size} value={size}>
+            {size}
+          </option>
+        ))}
+      </select>
 
       <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
 

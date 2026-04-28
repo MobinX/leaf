@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
+@import "mathlive/static.css";
 
 @utility no-scrollbar {
   -ms-overflow-style: none;

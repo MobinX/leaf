@@ -73,6 +73,9 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
 
   if (!editor) return <div className="h-[50px] bg-gray-50 animate-pulse" />;
 
+  const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
+  const currentFontSize = editor.getAttributes('textStyle').fontSize ?? '';
+
   const addLink = () => {
     const url = window.prompt('Enter URL');
     if (url) {
@@ -145,6 +148,27 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         <Heading2 size={18} />
       </MenuButton>
 
+      <select
+        value={currentFontSize}
+        onChange={(event) => {
+          const value = event.target.value;
+          if (!value) {
+            editor.chain().focus().unsetFontSize().run();
+            return;
+          }
+          editor.chain().focus().setFontSize(value).run();
+        }}
+        title="Font size"
+        className="h-[36px] rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">Font size</option>
+        {fontSizes.map((size) => (
+          <option key={size} value={size}>
+            {size}
+          </option>
+        ))}
+      </select>
+
       <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
 
       <MenuButton 
@@ -216,12 +240,12 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
       <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
 
       <MenuButton 
-        onClick={() => editor.chain().focus().insertMath().run()}
+        onClick={() => editor.chain().focus().insertInlineMath({ latex: '' }).run()}
         title="Math Formula (Sigma)"
-        isActive={editor.isActive('mathlive')}
+        isActive={editor.isActive('inlineMath')}
         className={cn(
           "ml-2",
-          editor.isActive('mathlive') 
+          editor.isActive('inlineMath') 
             ? "bg-blue-700 text-white shadow-md border-blue-800" 
             : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm border-blue-700"
         )}

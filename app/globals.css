@@ -196,9 +196,6 @@ math-field::part(container) {
 math-field::part(content) {
   overflow: visible !important;
 }
-math-field::part(virtual-keyboard-toggle) {
-  display: none !important;
-}
 .mathfield-shell {
   overflow: visible !important;
   display: inline-block !important;

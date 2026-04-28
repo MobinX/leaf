@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import 'mathlive';
+import type { MathfieldElement } from 'mathlive';
 import { useEditor, EditorContent, Node, mergeAttributes } from '@tiptap/react';
 import { Document } from '@tiptap/extension-document';
 import { Paragraph } from '@tiptap/extension-paragraph';
@@ -54,11 +56,6 @@ import {
   FileText,
   Copy,
 } from 'lucide-react';
-
-interface MathfieldElement extends HTMLElement {
-  value: string;
-  focus: () => void;
-}
 
 const LAB_REPORT_PROMPT_TEXT = `You need to write a lab report in basic html no css is allowed cause your html will be rendered by a markdown editor. That means the layout needs to be semantic and accessible using only standard HTML elements. you might use align attribute. You need to write Theory, apparatus, make table of data with caption and heading , write calculation with the help of math latex and write discussion. From the provided pdf learn the theory , discussion , calculation pattern and how you should compose the whole document . then learn from the style , pattern, order from the pdf. then see the extra images of data and data tables . keep in mind you only learn from the pdf file dont copy data from there. you need to use data from the images provided to you. based on the provided data image you need to write calculation . also you need to create a table and calculation for least square fitting. like formula for getting slope and intersection etc and calculation for that. how to write calculation learn from those pdf and write calculation based on provided images. then write result and discussion on findings. discussion should be short and concise. 3 point.Now there are two special tag you will use one is <math>latex code</math> . use this to write math equation only . for multi line you may use multiple <math> with line break.
 
@@ -197,8 +194,12 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
   const [mathEditorPos, setMathEditorPos] = useState<number | null>(null);
   const [mathEditorType, setMathEditorType] = useState<'inline' | 'block'>('inline');
   const mathFieldRef = useRef<MathfieldElement>(null);
-  const mathliveReadyRef = useRef(false);
+  const [mathliveReady, setMathliveReady] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(customElements.get('math-field'));
+  });
   const mathEditorLatexRef = useRef('');
+  const [mathFieldFocused, setMathFieldFocused] = useState(false);
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
 
   const confirmMathEdit = () => {
@@ -225,45 +226,47 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
   }, [mathEditorLatex]);
 
   useEffect(() => {
-    if (!showMathEditor) {
-      mathliveReadyRef.current = false;
-      return;
-    }
+    if (mathliveReady || typeof window === 'undefined') return;
 
-    let cleanup: (() => void) | undefined;
+    let active = true;
 
-    import('mathlive').then(() => {
-      mathliveReadyRef.current = true;
-      const mathField = mathFieldRef.current;
-      if (!mathField) return;
-
-      mathField.value = mathEditorLatexRef.current || '';
-
-      const handleInput = (event: Event) => {
-        const target = event.target as MathfieldElement;
-        setMathEditorLatex(target.value);
-      };
-
-      mathField.addEventListener('input', handleInput);
-
-      setTimeout(() => mathField.focus(), 0);
-
-      cleanup = () => {
-        mathField.removeEventListener('input', handleInput);
-      };
+    customElements.whenDefined('math-field').then(() => {
+      if (active) {
+        setMathliveReady(true);
+      }
     });
 
     return () => {
-      cleanup?.();
+      active = false;
     };
-  }, [showMathEditor]);
+  }, [mathliveReady]);
 
   useEffect(() => {
-    if (!showMathEditor || !mathliveReadyRef.current || !mathFieldRef.current) return;
+    if (!showMathEditor || !mathliveReady || !mathFieldRef.current) return;
+
+    const mathField = mathFieldRef.current;
+    mathField.value = mathEditorLatexRef.current || '';
+
+    const handleInput = (event: Event) => {
+      const target = event.target as MathfieldElement;
+      setMathEditorLatex(target.value);
+    };
+
+    mathField.addEventListener('input', handleInput);
+
+    setTimeout(() => mathField.focus(), 0);
+
+    return () => {
+      mathField.removeEventListener('input', handleInput);
+    };
+  }, [showMathEditor, mathliveReady]);
+
+  useEffect(() => {
+    if (!showMathEditor || !mathliveReady || !mathFieldRef.current) return;
     if (mathFieldRef.current.value !== mathEditorLatex) {
       mathFieldRef.current.value = mathEditorLatex || '';
     }
-  }, [mathEditorLatex, showMathEditor]);
+  }, [mathEditorLatex, showMathEditor, mathliveReady]);
 
   const insertCoverPage = (key: keyof typeof COVER_TEMPLATES) => {
     if (!editor) return;
@@ -497,6 +500,8 @@ const headingOptions = [
 ];
 
 const activeHeadingLabel = headingOptions.find((option) => option.isActive)?.label ?? 'H';
+const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
+const currentFontSize = editor.getAttributes('textStyle').fontSize ?? '';
 
 const persistSavedImages = async (updater: (prev: StoredImage[]) => StoredImage[]) => {
   const next = updater(savedImages);
@@ -763,6 +768,27 @@ return (
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
+
+        <select
+          value={currentFontSize}
+          onChange={(event) => {
+            const value = event.target.value;
+            if (!value) {
+              editor.chain().focus().unsetFontSize().run();
+              return;
+            }
+            editor.chain().focus().setFontSize(value).run();
+          }}
+          title="Font size"
+          className="h-[36px] rounded-md border border-gray-200 bg-white px-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Font size</option>
+          {fontSizes.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
 
         <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
@@ -1042,19 +1068,29 @@ return (
                 >Block</button>
               </div>
             </div>
-            <math-field
-              ref={mathFieldRef}
-              value={mathEditorLatex}
-              className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base outline-none focus:ring-2 focus:ring-blue-400"
-              style={{ minHeight: '120px' }}
-              virtual-keyboard-mode="onfocus"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  e.preventDefault();
-                  confirmMathEdit();
-                }
-              }}
-            />
+            {mathliveReady ? (
+              <div className="mathfield-shell w-full" data-mathlive-focused={mathFieldFocused}>
+                <math-field
+                  ref={mathFieldRef}
+                  value={mathEditorLatex}
+                  className="w-full rounded-lg border border-gray-300 bg-white p-3 text-base outline-none focus:ring-2 focus:ring-blue-400"
+                  style={{ minHeight: '120px' }}
+                  virtual-keyboard-mode="onfocus"
+                  onFocus={() => setMathFieldFocused(true)}
+                  onBlur={() => setMathFieldFocused(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      confirmMathEdit();
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500">
+                Loading MathLive editor…
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setShowMathEditor(false)}

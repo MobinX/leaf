@@ -60,6 +60,8 @@ h2 {
 .tiptap-page table,
 table {
   border-collapse: collapse !important;
+  table-layout: fixed !important;
+  overflow: hidden !important;
   margin: 1em 0 !important;
   width: 100% !important;
   min-width: 100% !important;
@@ -69,6 +71,7 @@ table {
 
 .ProseMirror .tableWrapper,
 .tiptap-page .tableWrapper {
+  overflow-x: auto !important;
   width: 100% !important;
   min-width: 100% !important;
   max-width: 100% !important;

@@ -21,7 +21,7 @@ import { Code } from '@tiptap/extension-code';
 import { CodeBlock } from '@tiptap/extension-code-block';
 import { PaginationPlus, PAGE_SIZES } from 'tiptap-pagination-plus';
 import { TextAlign } from '@tiptap/extension-text-align';
-import { MathliveExtension } from './MathliveExtension';
+import { Mathematics } from '@tiptap/extension-mathematics';
 import { ChartExtension } from './ChartExtension';
 import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
@@ -185,6 +185,11 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
   const [htmlDirty, setHtmlDirty] = useState(false);
   const [isPromptCopied, setIsPromptCopied] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [showMathEditor, setShowMathEditor] = useState(false);
+  const [mathEditorLatex, setMathEditorLatex] = useState('');
+  const [mathEditorPos, setMathEditorPos] = useState<number | null>(null);
+  const [mathEditorType, setMathEditorType] = useState<'inline' | 'block'>('inline');
+  const mathEditorInputRef = useRef<HTMLTextAreaElement>(null);
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
 
   const insertCoverPage = (key: keyof typeof COVER_TEMPLATES) => {
@@ -276,7 +281,25 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'left',
       }),
-      MathliveExtension, ChartExtension, HeadingOne, HeadingTwo, HeadingThree, HeadingFour, HeadingFive, HeadingSix,
+      Mathematics.configure({
+        katexOptions: { throwOnError: false },
+        inlineOptions: {
+          onClick: (node, pos) => {
+            setMathEditorLatex(node.attrs.latex || '');
+            setMathEditorPos(pos);
+            setMathEditorType('inline');
+            setShowMathEditor(true);
+          },
+        },
+        blockOptions: {
+          onClick: (node, pos) => {
+            setMathEditorLatex(node.attrs.latex || '');
+            setMathEditorPos(pos);
+            setMathEditorType('block');
+            setShowMathEditor(true);
+          },
+        },
+      }), ChartExtension, HeadingOne, HeadingTwo, HeadingThree, HeadingFour, HeadingFive, HeadingSix,
       ImagePlus.configure({
         wrapperStyle: { cursor: 'pointer' },
         containerStyle: {
@@ -883,7 +906,12 @@ return (
         </button>
 
         <button
-        onClick={() => editor.chain().focus().insertMath().run()}
+        onClick={() => {
+          setMathEditorLatex('');
+          setMathEditorPos(null);
+          setMathEditorType('inline');
+          setShowMathEditor(true);
+        }}
         className="ml-2 p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0"
         >
         <Sigma size={18} /> <span className="text-sm font-bold">Math</span>
@@ -916,6 +944,91 @@ return (
           )}
         </div>
       </div>
+
+      {showMathEditor && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40"
+          onClick={() => setShowMathEditor(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-800">
+                {mathEditorPos !== null ? 'Edit Math' : 'Insert Math'}
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMathEditorType('inline')}
+                  className={cn('px-3 py-1 rounded-md text-sm font-medium border', mathEditorType === 'inline' ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100')}
+                >Inline</button>
+                <button
+                  onClick={() => setMathEditorType('block')}
+                  className={cn('px-3 py-1 rounded-md text-sm font-medium border', mathEditorType === 'block' ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100')}
+                >Block</button>
+              </div>
+            </div>
+            <textarea
+              ref={mathEditorInputRef}
+              value={mathEditorLatex}
+              onChange={(e) => setMathEditorLatex(e.target.value)}
+              autoFocus
+              placeholder="Enter LaTeX, e.g. E = mc^2"
+              className="w-full h-28 font-mono text-sm border border-gray-300 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-400"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  e.currentTarget.closest('div')?.querySelector<HTMLButtonElement>('button[data-confirm]')?.click();
+                }
+              }}
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowMathEditor(false)}
+                className="px-4 py-2 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-100 text-sm font-medium"
+              >Cancel</button>
+              {mathEditorPos !== null && (
+                <button
+                  onClick={() => {
+                    if (mathEditorType === 'inline') {
+                      editor?.chain().focus().deleteInlineMath({ pos: mathEditorPos }).run();
+                    } else {
+                      editor?.chain().focus().deleteBlockMath({ pos: mathEditorPos }).run();
+                    }
+                    setShowMathEditor(false);
+                  }}
+                  className="px-4 py-2 rounded-md bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium border border-red-200"
+                >Delete</button>
+              )}
+              <button
+                data-confirm
+                onClick={() => {
+                  if (!mathEditorLatex.trim() || !editor) return;
+                  if (mathEditorPos !== null) {
+                    if (mathEditorType === 'inline') {
+                      editor.chain().focus().updateInlineMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
+                    } else {
+                      editor.chain().focus().updateBlockMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
+                    }
+                  } else {
+                    if (mathEditorType === 'inline') {
+                      editor.chain().focus().insertInlineMath({ latex: mathEditorLatex }).run();
+                    } else {
+                      editor.chain().focus().insertBlockMath({ latex: mathEditorLatex }).run();
+                    }
+                  }
+                  setShowMathEditor(false);
+                }}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm font-bold"
+              >
+                {mathEditorPos !== null ? 'Update' : 'Insert'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400">Tip: Press Ctrl+Enter to confirm. Click on any math expression to edit it.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -216,12 +216,12 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
       <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
 
       <MenuButton 
-        onClick={() => editor.chain().focus().insertMath().run()}
+        onClick={() => editor.chain().focus().insertInlineMath({ latex: '' }).run()}
         title="Math Formula (Sigma)"
-        isActive={editor.isActive('mathlive')}
+        isActive={editor.isActive('inlineMath')}
         className={cn(
           "ml-2",
-          editor.isActive('mathlive') 
+          editor.isActive('inlineMath') 
             ? "bg-blue-700 text-white shadow-md border-blue-800" 
             : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm border-blue-700"
         )}

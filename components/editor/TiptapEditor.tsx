@@ -192,6 +192,24 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
   const mathEditorInputRef = useRef<HTMLTextAreaElement>(null);
   const [savedImages, setSavedImages] = useState<StoredImage[]>([]);
 
+  const confirmMathEdit = () => {
+    if (!mathEditorLatex.trim() || !editor) return;
+    if (mathEditorPos !== null) {
+      if (mathEditorType === 'inline') {
+        editor.chain().focus().updateInlineMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
+      } else {
+        editor.chain().focus().updateBlockMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
+      }
+    } else {
+      if (mathEditorType === 'inline') {
+        editor.chain().focus().insertInlineMath({ latex: mathEditorLatex }).run();
+      } else {
+        editor.chain().focus().insertBlockMath({ latex: mathEditorLatex }).run();
+      }
+    }
+    setShowMathEditor(false);
+  };
+
   const insertCoverPage = (key: keyof typeof COVER_TEMPLATES) => {
     if (!editor) return;
     editor.chain().focus().insertContentAt(0, COVER_TEMPLATES[key]).run();
@@ -979,7 +997,7 @@ return (
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();
-                  e.currentTarget.closest('div')?.querySelector<HTMLButtonElement>('button[data-confirm]')?.click();
+                  confirmMathEdit();
                 }
               }}
             />
@@ -1002,25 +1020,9 @@ return (
                 >Delete</button>
               )}
               <button
-                data-confirm
-                onClick={() => {
-                  if (!mathEditorLatex.trim() || !editor) return;
-                  if (mathEditorPos !== null) {
-                    if (mathEditorType === 'inline') {
-                      editor.chain().focus().updateInlineMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
-                    } else {
-                      editor.chain().focus().updateBlockMath({ latex: mathEditorLatex, pos: mathEditorPos }).run();
-                    }
-                  } else {
-                    if (mathEditorType === 'inline') {
-                      editor.chain().focus().insertInlineMath({ latex: mathEditorLatex }).run();
-                    } else {
-                      editor.chain().focus().insertBlockMath({ latex: mathEditorLatex }).run();
-                    }
-                  }
-                  setShowMathEditor(false);
-                }}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm font-bold"
+                onClick={confirmMathEdit}
+                disabled={!mathEditorLatex.trim()}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {mathEditorPos !== null ? 'Update' : 'Insert'}
               </button>

@@ -60,25 +60,22 @@ h2 {
 .tiptap-page table,
 table {
   border-collapse: collapse !important;
+  table-layout: fixed !important;
+  overflow: hidden !important;
   margin: 1em 0 !important;
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
+  width: 100%;
   border: 2px solid black !important;
 }
 
 .ProseMirror .tableWrapper,
 .tiptap-page .tableWrapper {
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
+  overflow-x: auto !important;
+  width: 100%;
 }
 
 .ProseMirror .tiptap-full-width-table,
 .tiptap-page .tiptap-full-width-table {
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
+  width: 100%;
 }
 
 .ProseMirror td, 

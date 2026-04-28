@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
 import {
   Bold as BoldIcon, Italic as ItalicIcon, Underline as UnderlineIcon,
-  Heading1, Heading2, Heading3, Heading4, List, ListOrdered,
+  Heading1, Heading3, List, ListOrdered,
   Table as TableIcon, Sigma, Undo, Redo,
   Image as ImageIcon,
   Printer,
@@ -115,6 +115,20 @@ const HeadingFour = Node.create({
   addCommands() { return { toggleHeadingFour: () => ({ commands }) => commands.toggleNode(this.name, 'paragraph') } }
 });
 
+const HeadingFive = Node.create({
+  name: 'headingFive', group: 'block', content: 'inline*',
+  parseHTML() { return [{ tag: 'h5' }] },
+  renderHTML({ HTMLAttributes }) { return ['h5', mergeAttributes(HTMLAttributes, { style: 'font-size: 18px; font-weight: 600; color: black; display: block; margin: 0.2em 0;' }), 0] },
+  addCommands() { return { toggleHeadingFive: () => ({ commands }) => commands.toggleNode(this.name, 'paragraph') } }
+});
+
+const HeadingSix = Node.create({
+  name: 'headingSix', group: 'block', content: 'inline*',
+  parseHTML() { return [{ tag: 'h6' }] },
+  renderHTML({ HTMLAttributes }) { return ['h6', mergeAttributes(HTMLAttributes, { style: 'font-size: 16px; font-weight: 600; color: black; display: block; margin: 0.2em 0;' }), 0] },
+  addCommands() { return { toggleHeadingSix: () => ({ commands }) => commands.toggleNode(this.name, 'paragraph') } }
+});
+
 type StoredImage = {
   id: string;
   src: string;
@@ -163,6 +177,7 @@ const MenuButton = ({
 export default function TiptapEditor({ initialContent, onContentChange }: { initialContent?: string, onContentChange?: (html: string) => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTableMenu, setShowTableMenu] = useState(false);
+  const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [showCoverMenu, setShowCoverMenu] = useState(false);
   const [showHtmlView, setShowHtmlView] = useState(false);
@@ -257,11 +272,11 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
         },
       }),
       TextAlign.configure({
-        types: ['paragraph', 'headingOne', 'headingTwo', 'headingThree', 'headingFour'],
+        types: ['paragraph', 'headingOne', 'headingTwo', 'headingThree', 'headingFour', 'headingFive', 'headingSix'],
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'left',
       }),
-      MathliveExtension, ChartExtension, HeadingOne, HeadingTwo, HeadingThree, HeadingFour,
+      MathliveExtension, ChartExtension, HeadingOne, HeadingTwo, HeadingThree, HeadingFour, HeadingFive, HeadingSix,
       ImagePlus.configure({
         wrapperStyle: { cursor: 'pointer' },
         containerStyle: {
@@ -375,6 +390,17 @@ const tableActions = [
   { label: 'Insert after table', icon: <Heading3 size={16} />, onClick: insertHeadingAfterCurrentTable },
   { label: 'Del Table', icon: <Trash2 size={16} className="text-red-500" />, onClick: () => editor.chain().focus().deleteTable().run() },
 ];
+
+const headingOptions = [
+  { label: 'H1', title: 'Heading 1', isActive: editor.isActive('headingOne'), onClick: () => editor.chain().focus().toggleHeadingOne().run() },
+  { label: 'H2', title: 'Heading 2', isActive: editor.isActive('headingTwo'), onClick: () => editor.chain().focus().toggleHeadingTwo().run() },
+  { label: 'H3', title: 'Heading 3', isActive: editor.isActive('headingThree'), onClick: () => editor.chain().focus().toggleHeadingThree().run() },
+  { label: 'H4', title: 'Heading 4', isActive: editor.isActive('headingFour'), onClick: () => editor.chain().focus().toggleHeadingFour().run() },
+  { label: 'H5', title: 'Heading 5', isActive: editor.isActive('headingFive'), onClick: () => editor.chain().focus().toggleHeadingFive().run() },
+  { label: 'H6', title: 'Heading 6', isActive: editor.isActive('headingSix'), onClick: () => editor.chain().focus().toggleHeadingSix().run() },
+];
+
+const activeHeadingLabel = headingOptions.find((option) => option.isActive)?.label ?? 'H';
 
 const persistSavedImages = async (updater: (prev: StoredImage[]) => StoredImage[]) => {
   const next = updater(savedImages);
@@ -605,10 +631,43 @@ return (
 
         <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
-        <MenuButton onClick={() => editor.chain().focus().toggleHeadingOne().run()} isActive={editor.isActive('headingOne')} title="H1"><Heading1 size={18} /></MenuButton>
-        <MenuButton onClick={() => editor.chain().focus().toggleHeadingTwo().run()} isActive={editor.isActive('headingTwo')} title="H2"><Heading2 size={18} /></MenuButton>
-        <MenuButton onClick={() => editor.chain().focus().toggleHeadingThree().run()} isActive={editor.isActive('headingThree')} title="H3"><Heading3 size={18} /></MenuButton>
-        <MenuButton onClick={() => editor.chain().focus().toggleHeadingFour().run()} isActive={editor.isActive('headingFour')} title="H4"><Heading4 size={18} /></MenuButton>
+        <Popover.Root open={showHeadingMenu} onOpenChange={setShowHeadingMenu}>
+          <Popover.Trigger asChild>
+            <div className="relative">
+              <MenuButton
+                preventDefault={false}
+                isActive={showHeadingMenu || headingOptions.some((option) => option.isActive)}
+                title="Headings"
+                className="gap-1 px-2"
+              >
+                <Heading1 size={16} />
+                <span className="text-xs font-semibold">{activeHeadingLabel}</span>
+                <ChevronDown size={14} className={cn("ml-1 transition-transform", showHeadingMenu && "rotate-180")} />
+              </MenuButton>
+            </div>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[160px] animate-in fade-in zoom-in duration-200">
+              {headingOptions.map((option) => (
+                <button
+                  key={option.label}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    option.onClick();
+                    setShowHeadingMenu(false);
+                  }}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md text-left transition-colors",
+                    option.isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  <span className="font-semibold">{option.label}</span>
+                  <span className="text-xs text-gray-500">{option.title}</span>
+                </button>
+              ))}
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
 
         <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
@@ -868,5 +927,7 @@ declare module '@tiptap/core' {
     headingTwo: { toggleHeadingTwo: () => ReturnType; }
     headingThree: { toggleHeadingThree: () => ReturnType; }
     headingFour: { toggleHeadingFour: () => ReturnType; }
+    headingFive: { toggleHeadingFive: () => ReturnType; }
+    headingSix: { toggleHeadingSix: () => ReturnType; }
   }
 }

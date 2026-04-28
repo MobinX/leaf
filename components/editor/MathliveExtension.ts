@@ -35,7 +35,11 @@ export const MathliveExtension = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(MathfieldView);
+    return ReactNodeViewRenderer(MathfieldView, {
+      stopEvent: (event) => {
+        return !!(event?.target as HTMLElement)?.closest?.('math-field');
+      },
+    });
   },
 
   addCommands() {

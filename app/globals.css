@@ -100,10 +100,23 @@ td, th {
   width: 4px !important;
   background-color: #3b82f6 !important;
   pointer-events: none !important;
+  z-index: 20 !important;
 }
 
-.ProseMirror.resize-cursor,
-.ProseMirror.resize-cursor * {
+.ProseMirror .selectedCell:after,
+.tiptap-page .selectedCell:after {
+  z-index: 2 !important;
+  position: absolute !important;
+  content: "" !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  background: rgba(200, 200, 255, 0.4) !important;
+  pointer-events: none !important;
+}
+
+.ProseMirror.resize-cursor {
   cursor: col-resize !important;
 }
 
@@ -145,65 +158,25 @@ td, th {
 
 /* Mathfield styling */
 math-field {
-  color: black !important;
-  background-color: rgba(0,0,0,0.03) !important;
-  border-radius: 4px !important;
-  padding: 4px 6px !important;
-  font-size: inherit !important;
-  font-family: inherit !important;
-  vertical-align: middle !important;
-  overflow: visible !important;
-  line-height: normal !important;
+  color: black;
+  border-radius: 4px;
+  vertical-align: middle;
+  overflow: visible;
+  line-height: normal;
+  display: inline-block;
 }
 
 .mathfield-shell {
-  font-size: inherit !important;
-  vertical-align: middle !important;
-  line-height: normal !important;
+  vertical-align: middle;
+  line-height: normal;
+  display: inline-block;
 }
 
-.mathfield-shell math-field::part(container),
-.mathfield-shell math-field::part(content) {
-  font-size: inherit !important;
-  overflow: visible !important;
-}
-
-.mathfield-shell math-field::part(menu-toggle),
-.mathfield-shell math-field::part(virtual-keyboard-toggle) {
-  display: none !important;
-}
-
-.mathfield-shell[data-mathlive-focused='true'] math-field::part(menu-toggle),
-.mathfield-shell[data-mathlive-focused='true'] math-field::part(virtual-keyboard-toggle) {
-  display: inline-flex !important;
-}
-
-
-
-math-field {
-  overflow: visible !important;
-  line-height: normal !important;
-  padding-top: 4px !important;
-  padding-bottom: 8px !important;
-  contain: none !important;
-  background: transparent !important;
-}
-math-field::part(container) {
-  overflow: visible !important;
-}
+math-field::part(container),
 math-field::part(content) {
   overflow: visible !important;
 }
-math-field::part(virtual-keyboard-toggle) {
-  display: none !important;
-}
-.mathfield-shell {
-  overflow: visible !important;
-  display: inline-block !important;
-  vertical-align: middle !important;
-  line-height: normal !important;
-  padding-bottom: 4px !important;
-}
+
 
 body {
   background-color: #f3f4f6;

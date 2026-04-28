@@ -21,7 +21,56 @@ import { Code } from '@tiptap/extension-code';
 import { CodeBlock } from '@tiptap/extension-code-block';
 import { PaginationPlus, PAGE_SIZES } from 'tiptap-pagination-plus';
 import { TextAlign } from '@tiptap/extension-text-align';
+import { Mathematics } from '@tiptap/extension-mathematics';
+import { TextStyle } from '@tiptap/extension-text-style';
+import 'katex/dist/katex.min.css';
 import { MathliveExtension } from './MathliveExtension';
+import { Extension } from '@tiptap/core';
+
+const FontSize = Extension.create({
+  name: 'fontSize',
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    };
+  },
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize.replace(/['"]+/g, ''),
+            renderHTML: attributes => {
+              if (!attributes.fontSize) {
+                return {};
+              }
+              return {
+                style: `font-size: ${attributes.fontSize}`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+  addCommands() {
+    return {
+      setFontSize: (fontSize: string) => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize })
+          .run();
+      },
+      unsetFontSize: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize: null })
+          .removeEmptyTextStyle()
+          .run();
+      },
+    };
+  },
+});
 import { ChartExtension } from './ChartExtension';
 import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
@@ -180,6 +229,7 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [showCoverMenu, setShowCoverMenu] = useState(false);
+  const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
   const [showHtmlView, setShowHtmlView] = useState(false);
   const [htmlOutput, setHtmlOutput] = useState('');
   const [htmlDirty, setHtmlDirty] = useState(false);
@@ -276,7 +326,8 @@ export default function TiptapEditor({ initialContent, onContentChange }: { init
         alignments: ['left', 'center', 'right', 'justify'],
         defaultAlignment: 'left',
       }),
-      MathliveExtension, ChartExtension, HeadingOne, HeadingTwo, HeadingThree, HeadingFour, HeadingFive, HeadingSix,
+      TextStyle, FontSize,
+      MathliveExtension, Mathematics, ChartExtension, HeadingOne, HeadingTwo, HeadingThree, HeadingFour, HeadingFive, HeadingSix,
       ImagePlus.configure({
         wrapperStyle: { cursor: 'pointer' },
         containerStyle: {
@@ -631,6 +682,54 @@ return (
 
         <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
+        <Popover.Root open={showFontSizeMenu} onOpenChange={setShowFontSizeMenu}>
+          <Popover.Trigger asChild>
+            <div className="relative">
+              <MenuButton
+                preventDefault={false}
+                isActive={showFontSizeMenu || editor.getAttributes('textStyle').fontSize}
+                title="Font Size"
+                className="gap-1 px-2"
+              >
+                <span className="text-xs font-semibold">
+                  {editor.getAttributes('textStyle').fontSize?.replace('pt', '') || '12'}
+                </span>
+                <ChevronDown size={14} className={cn("ml-0.5 transition-transform", showFontSizeMenu && "rotate-180")} />
+              </MenuButton>
+            </div>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[80px] max-h-[300px] overflow-y-auto animate-in fade-in zoom-in duration-200">
+              {['8pt', '9pt', '10pt', '11pt', '12pt', '14pt', '16pt', '18pt', '24pt', '30pt', '36pt', '48pt', '60pt', '72pt'].map((size) => (
+                <button
+                  key={size}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    editor.chain().focus().setFontSize(size).run();
+                    setShowFontSizeMenu(false);
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-md text-left transition-colors",
+                    editor.getAttributes('textStyle').fontSize === size ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  {size.replace('pt', '')}
+                </button>
+              ))}
+              <button
+                onClick={(event) => {
+                  event.preventDefault();
+                  editor.chain().focus().unsetFontSize().run();
+                  setShowFontSizeMenu(false);
+                }}
+                className="px-3 py-1.5 text-xs font-medium rounded-md text-left text-red-600 hover:bg-red-50 border-t mt-1"
+              >
+                Reset
+              </button>
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+
         <Popover.Root open={showHeadingMenu} onOpenChange={setShowHeadingMenu}>
           <Popover.Trigger asChild>
             <div className="relative">
@@ -928,5 +1027,9 @@ declare module '@tiptap/core' {
     headingFour: { toggleHeadingFour: () => ReturnType; }
     headingFive: { toggleHeadingFive: () => ReturnType; }
     headingSix: { toggleHeadingSix: () => ReturnType; }
+    fontSize: {
+      setFontSize: (size: string) => ReturnType;
+      unsetFontSize: () => ReturnType;
+    }
   }
 }

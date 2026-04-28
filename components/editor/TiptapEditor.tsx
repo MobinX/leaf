@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
 import {
   Bold as BoldIcon, Italic as ItalicIcon, Underline as UnderlineIcon,
-  Heading1, Heading3, List, ListOrdered,
+  Heading3, List, ListOrdered,
   Table as TableIcon, Sigma, Undo, Redo,
   Image as ImageIcon,
   Printer,
@@ -640,7 +640,6 @@ return (
                 title="Headings"
                 className="gap-1 px-2"
               >
-                <Heading1 size={16} />
                 <span className="text-xs font-semibold">{activeHeadingLabel}</span>
                 <ChevronDown size={14} className={cn("ml-1 transition-transform", showHeadingMenu && "rotate-180")} />
               </MenuButton>

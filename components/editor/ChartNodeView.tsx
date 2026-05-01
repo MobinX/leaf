@@ -44,28 +44,6 @@ const toRows = (xData: number[], yData: number[]): EditableRow[] => [
   createEmptyRow(),
 ];
 
-const parseNumberArray = (raw: unknown): number[] => {
-  if (typeof raw === 'string') {
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (!Array.isArray(parsed)) return [];
-      return parsed
-        .map((item) => Number(item))
-        .filter((item) => Number.isFinite(item));
-    } catch {
-      return [];
-    }
-  }
-
-  if (Array.isArray(raw)) {
-    return raw
-      .map((item) => Number(item))
-      .filter((item) => Number.isFinite(item));
-  }
-
-  return [];
-};
-
 const parseDatasets = (raw: unknown): Dataset[] => {
   if (typeof raw === 'string') {
     try {
@@ -128,7 +106,7 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
   const allPoints: Array<{ x: number; y: number; datasetId: string }> = [];
   const fitResults: Record<string, ReturnType<typeof fitLeastSquares>> = {};
 
-  datasets.forEach((ds, idx) => {
+  datasets.forEach((ds) => {
     const points: DataPoint[] = ds.xData
       .map((x, i) => ({ x, y: ds.yData[i] ?? 0 }))
       .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
@@ -330,7 +308,7 @@ export default function ChartNodeView({ node, updateAttributes, selected, delete
   };
 
   // Prepare chart data for Recharts: merge data points + fitted curves
-  const chartDataMap = new Map<number, Record<string, any>>();
+  const chartDataMap = new Map<number, Record<string, number>>();
   
   // Add data points
   datasets.forEach((ds, idx) => {

@@ -6,9 +6,6 @@
 
 'use client';
 
-import { useCallback } from 'react';
-import { ChevronDown } from 'lucide-react';
-
 interface VariantToolbarProps {
   selectedTheory: 0 | 1 | 2;
   selectedDiscussion: 0 | 1 | 2;

@@ -11,13 +11,13 @@ interface MathfieldElement extends HTMLElement {
   focus: () => void;
   blur: () => void;
   hasFocus: () => boolean;
-  setOptions: (options: any) => void;
+  setOptions: (options: object) => void;
 }
 
 export default function MathfieldView({ node, updateAttributes, selected, editor }: NodeViewProps) {
   const mfRef = useRef<MathfieldElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(node.attrs.latex === '');
 
   // Sync latex with attributes
   const latex = node.attrs.latex || '';
@@ -121,14 +121,6 @@ export default function MathfieldView({ node, updateAttributes, selected, editor
       setIsEditing(true);
     }
   };
-
-  // Auto-focus on insertion if empty
-  useEffect(() => {
-    if (latex === '' && !isEditing) {
-      setIsEditing(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Auto-focus on insertion if empty (alternate check)
   useEffect(() => {

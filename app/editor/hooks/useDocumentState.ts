@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Document } from '@/lib/types';
+import type { Document, VariantContent } from '@/lib/types';
 import { DocumentStorage } from '@/lib/documentStorage';
 
 const EMPTY_DOCUMENT = (id: string): Document => {
@@ -99,17 +99,18 @@ export function useDocumentState(documentId: string) {
   );
 
   const updateInputs = useCallback(
-    (section: keyof Document['inputs'] | '_aiComplete', data: any) => {
+    (section: keyof Document['inputs'] | '_aiComplete', data: unknown) => {
       setDocument(prev => {
         if (!prev) return null;
 
         let updated: Document;
         if (section === '_aiComplete') {
+          const aiData = data as { aiOutput: VariantContent, editorContent: string, selectedVariants: Document['selectedVariants'] };
           updated = {
             ...prev,
-            aiOutput: data.aiOutput,
-            editorContent: data.editorContent,
-            selectedVariants: data.selectedVariants,
+            aiOutput: aiData.aiOutput,
+            editorContent: aiData.editorContent,
+            selectedVariants: aiData.selectedVariants,
             isGenerating: false,
             updatedAt: new Date().toISOString()
           };

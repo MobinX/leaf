@@ -37,7 +37,7 @@ class DocumentStorageImpl {
         }
       };
 
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve) => {
         request.onsuccess = () => {
           this.db = request.result;
           resolve(undefined);
@@ -152,11 +152,11 @@ class DocumentStorageImpl {
     }
   }
 
-  private _serializeDocument(doc: Document): any {
+  private _serializeDocument(doc: Document): unknown {
     // For now, simplify and avoid URL.createObjectURL which is not persistent
-    const serialized = { ...doc } as any;
+    const serialized = { ...doc };
     if (serialized.inputs?.theory) {
-      serialized.inputs.theory = serialized.inputs.theory.map((t: any) => ({
+      serialized.inputs.theory = serialized.inputs.theory.map((t: { images: Blob[]; comment: string }) => ({
         ...t,
         images: [] // Don't store temporary blobs/objectURLs
       }));
@@ -165,7 +165,7 @@ class DocumentStorageImpl {
     return serialized;
   }
 
-  private _deserializeDocument(doc: any): Document {
+  private _deserializeDocument(doc: unknown): Document {
     return doc as Document;
   }
 

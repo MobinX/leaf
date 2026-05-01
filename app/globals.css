@@ -67,7 +67,7 @@ table {
   border: 2px solid black !important;
 }
 
-.ProseMirror .tableWrapper,
+/* .ProseMirror .tableWrapper,
 .tiptap-page .tableWrapper {
   overflow-x: auto !important;
   width: 100%;
@@ -76,6 +76,27 @@ table {
 .ProseMirror .tiptap-full-width-table,
 .tiptap-page .tiptap-full-width-table {
   width: 100%;
+} */
+
+/* Restore native ProseMirror table layout for PaginationPlus */
+.rm-with-pagination table {
+  display: table !important;
+  width: auto !important;
+  border-collapse: collapse !important;
+}
+
+.rm-with-pagination table > tr {
+  display: table-row !important;
+}
+
+.rm-with-pagination table tbody {
+  display: table-row-group !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.rm-with-pagination table tbody > tr {
+  display: table-row !important;
 }
 
 .ProseMirror td, 

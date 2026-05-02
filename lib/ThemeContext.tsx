@@ -12,14 +12,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('leaf-theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Check localStorage during initialization (only on client)
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('leaf-theme') as Theme;
+      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'hybrid') {
+        return savedTheme;
+      }
     }
-  }, []);
+    return 'hybrid';
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

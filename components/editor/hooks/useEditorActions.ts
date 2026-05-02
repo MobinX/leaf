@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
-import { LAB_REPORT_PROMPT_TEXT } from '../constants';
 
 export function useEditorActions(
   editor: Editor | null,
@@ -9,7 +8,6 @@ export function useEditorActions(
   const [showHtmlView, setShowHtmlView] = useState(false);
   const [htmlOutput, setHtmlOutput] = useState('');
   const [htmlDirty, setHtmlDirty] = useState(false);
-  const [isPromptCopied, setIsPromptCopied] = useState(false);
 
   const insertImageFromUrl = useCallback((url: string) => {
     const src = url.trim();
@@ -62,28 +60,16 @@ export function useEditorActions(
     window.print();
   }, [editor, showHtmlView, htmlDirty, htmlOutput]);
 
-  const copyLabPrompt = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(LAB_REPORT_PROMPT_TEXT);
-      setIsPromptCopied(true);
-      window.setTimeout(() => setIsPromptCopied(false), 1500);
-    } catch (error) {
-      console.error('Failed to copy lab prompt text', error);
-    }
-  }, []);
-
   return {
     showHtmlView,
     htmlOutput,
     setHtmlOutput,
     htmlDirty,
     setHtmlDirty,
-    isPromptCopied,
     insertImageFromUrl,
     insertStoredImage,
     onUploadImage,
     handleToggleHtmlView,
     handlePrintClick,
-    copyLabPrompt
   };
 }

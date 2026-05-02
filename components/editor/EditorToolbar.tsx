@@ -12,7 +12,7 @@ import {
   Trash2, ChevronDown, Link2, Upload, Columns2, Rows2,
   TableCellsMerge, TableCellsSplit, Square, ArrowRight, ArrowLeft,
   Wrench, Grid2X2, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  BarChart3, Copy,
+  BarChart3,
   Code,
   CodeXml,
 } from 'lucide-react';
@@ -50,27 +50,23 @@ interface EditorToolbarProps {
   savedImages: StoredImage[];
   showHtmlView: boolean;
   htmlDirty: boolean;
-  isPromptCopied: boolean;
   onInsertImageFromUrl: (url: string) => void;
   onInsertStoredImage: (src: string) => void;
   onClearStoredImages: () => void;
   onUploadImage: React.ChangeEventHandler<HTMLInputElement>;
   onToggleHtmlView: () => void;
   onPrint: () => void;
-  onCopyPrompt: () => void;
 }
 export const EditorToolbar = function EditorToolbar({
   editor,
   savedImages,
   showHtmlView,
-  isPromptCopied,
   onInsertImageFromUrl,
   onInsertStoredImage,
   onClearStoredImages,
   onUploadImage,
   onToggleHtmlView,
   onPrint,
-  onCopyPrompt,
 }: EditorToolbarProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,7 +128,7 @@ export const EditorToolbar = function EditorToolbar({
   const activeAlign = getActiveAlign();
 
   return (
-    <div className="flex-none w-full bg-[var(--bg-toolbar)] border-b border-[var(--border-toolbar)] p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[1200px] bg-[var(--bg-toolbar)]/70 backdrop-blur-md border border-[var(--border-toolbar)] p-2 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-xl z-50 rounded-2xl no-print">
       <MenuButton onClick={() => editor.chain().focus().undo().run()} title="Undo (Ctrl+Z / Cmd+Z)"><Undo size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().redo().run()} title="Redo (Ctrl+Shift+Z / Cmd+Shift+Z)"><Redo size={18} /></MenuButton>
       <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
@@ -278,34 +274,22 @@ export const EditorToolbar = function EditorToolbar({
         </Popover.Portal>
       </Popover.Root>
 
-      <button onClick={onToggleHtmlView}
-        className={cn("ml-2 p-2 rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0",
-          showHtmlView ? "bg-violet-700 text-white hover:bg-violet-800" : "bg-violet-600 text-white hover:bg-violet-700")}>
+      <MenuButton onClick={() => editor.chain().focus().insertMath().run()} title="Insert Equation"><Sigma size={18} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().insertChart().run()} title="Insert Chart"><BarChart3 size={18} /></MenuButton>
+
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
+
+      <MenuButton 
+        onClick={onToggleHtmlView} 
+        isActive={showHtmlView} 
+        title={showHtmlView ? "Switch to Editor View" : "Switch to HTML View"}
+      >
         <FileCode2 size={18} />
-        <span className="text-sm font-bold">{showHtmlView ? 'Editor' : 'HTML'}</span>
-      </button>
+      </MenuButton>
 
-      <button onClick={onCopyPrompt}
-        className={cn("ml-2 p-2 rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0",
-          isPromptCopied ? "bg-green-600 text-white hover:bg-green-700" : "bg-amber-600 text-white hover:bg-amber-700")}
-        title="Copy lab report prompt">
-        <Copy size={18} />
-        <span className="text-sm font-bold">{isPromptCopied ? 'Copied' : 'Copy Prompt'}</span>
-      </button>
-
-      <button onClick={onPrint} className="p-2 text-white rounded-md flex items-center gap-1.5 px-3 shadow-sm shrink-0 ml-4 bg-gray-800 hover:bg-black">
-        <Printer size={18} /> <span className="text-sm font-bold">Print</span>
-      </button>
-
-      <button onClick={() => editor.chain().focus().insertMath().run()}
-        className="ml-2 p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0">
-        <Sigma size={18} /> <span className="text-sm font-bold">Math</span>
-      </button>
-
-      <button onClick={() => editor.chain().focus().insertChart().run()}
-        className="ml-2 p-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0">
-        <BarChart3 size={18} /> <span className="text-sm font-bold">Chart</span>
-      </button>
+      <MenuButton onClick={onPrint} title="Print Document">
+        <Printer size={18} />
+      </MenuButton>
     </div>
   );
 }

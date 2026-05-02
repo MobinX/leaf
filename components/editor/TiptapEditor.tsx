@@ -91,13 +91,11 @@ export default function TiptapEditor({
     setHtmlOutput,
     htmlDirty,
     setHtmlDirty,
-    isPromptCopied,
     insertImageFromUrl,
     insertStoredImage,
     onUploadImage,
     handleToggleHtmlView,
     handlePrintClick,
-    copyLabPrompt
   } = useEditorActions(editor, addStoredImage);
 
   if (!editor) return null;
@@ -107,13 +105,15 @@ export default function TiptapEditor({
        <style dangerouslySetInnerHTML={{
         __html: `
         .tiptap-page { 
-          background-color: #ffffff !important; 
+          background-color: rgba(255, 255, 255, 0.7) !important; 
+          backdrop-filter: blur(8px);
           color: black !important; 
           box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important; 
           margin-bottom: 40px !important; 
           padding: 2cm !important; 
           min-height: 29.7cm !important; 
           box-sizing: border-box !important; 
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
         }
 
         @media print {
@@ -191,18 +191,16 @@ export default function TiptapEditor({
         savedImages={savedImages}
         showHtmlView={showHtmlView}
         htmlDirty={htmlDirty}
-        isPromptCopied={isPromptCopied}
         onInsertImageFromUrl={insertImageFromUrl}
         onInsertStoredImage={insertStoredImage}
         onClearStoredImages={clearStoredImages}
         onUploadImage={onUploadImage}
         onToggleHtmlView={handleToggleHtmlView}
         onPrint={handlePrintClick}
-        onCopyPrompt={copyLabPrompt}
       />
       <VerticalToolbar editor={editor} />
 
-      <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 flex flex-col items-center tiptap-page-container">
+      <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 pt-28 flex flex-col items-center tiptap-page-container">
         <div className="w-full max-w-[21cm]">
           {showHtmlView ? (
             <textarea

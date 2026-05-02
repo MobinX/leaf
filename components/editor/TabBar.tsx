@@ -27,8 +27,8 @@ export default function TabBar({ tabs, activeTabId, onTabChange, onAddTab, onClo
       {/* Sleek thin handle */}
       <div 
         className={cn(
-          "fixed bottom-0 left-1/2 -translate-x-1/2 w-24 h-2.5 bg-gray-400 dark:bg-gray-600 rounded-t-full cursor-pointer hover:h-4 transition-all z-[60] flex items-center justify-center group no-print",
-          isOpen && "bottom-12"
+          "fixed bottom-0 left-1/2 -translate-x-1/2 w-24 h-2 bg-gray-400/50 backdrop-blur-sm dark:bg-gray-600/50 rounded-t-full cursor-pointer hover:h-3 transition-all z-[60] flex items-center justify-center group no-print",
+          isOpen && "bottom-[68px]"
         )}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -42,8 +42,8 @@ export default function TabBar({ tabs, activeTabId, onTabChange, onAddTab, onClo
       </div>
 
       <div className={cn(
-        "fixed bottom-0 left-0 right-0 h-12 bg-[var(--bg-toolbar)] border-t border-[var(--border-toolbar)] flex items-center px-4 gap-2 overflow-x-auto shadow-md no-print z-50 transition-transform duration-300 ease-in-out",
-        !isOpen && "translate-y-full"
+        "fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[1200px] h-12 bg-[var(--bg-toolbar)]/70 backdrop-blur-md border border-[var(--border-toolbar)] flex items-center px-4 gap-2 overflow-x-auto shadow-xl no-print z-50 rounded-2xl transition-all duration-300 ease-in-out",
+        !isOpen && "translate-y-[calc(100%+2rem)] opacity-0 pointer-events-none"
       )}>
         <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
@@ -51,10 +51,10 @@ export default function TabBar({ tabs, activeTabId, onTabChange, onAddTab, onClo
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "px-4 py-1.5 text-sm font-medium rounded-t-lg border-x border-t transition-colors shrink-0",
+                "px-4 py-1.5 text-sm font-medium rounded-lg border transition-colors shrink-0",
                 activeTabId === tab.id
-                  ? 'bg-[var(--bg-app)] border-[var(--border-toolbar)] text-[var(--fg-toolbar-hover)]'
-                  : 'bg-[var(--bg-toolbar)] border-transparent text-[var(--fg-toolbar)] hover:bg-[var(--bg-toolbar-hover)]'
+                  ? 'bg-[var(--bg-toolbar-active)] border-[var(--border-toolbar)] text-[var(--fg-toolbar-active)] shadow-sm'
+                  : 'bg-transparent border-transparent text-[var(--fg-toolbar)] hover:bg-[var(--bg-toolbar-hover)]'
               )}
             >
               {tab.name}
@@ -62,14 +62,14 @@ export default function TabBar({ tabs, activeTabId, onTabChange, onAddTab, onClo
           ))}
           <button
             onClick={onAddTab}
-            className="px-3 py-1.5 text-sm font-medium border border-[var(--border-toolbar)] rounded-md hover:bg-[var(--bg-toolbar-hover)] flex items-center text-[var(--fg-toolbar)]"
+            className="p-1.5 text-sm font-medium border border-[var(--border-toolbar)] rounded-md hover:bg-[var(--bg-toolbar-hover)] flex items-center text-[var(--fg-toolbar)] transition-colors"
             title="Add new tab"
           >
             <Plus size={16} />
           </button>
           <button
             onClick={onCloneTab}
-            className="px-3 py-1.5 text-sm font-medium border border-[var(--border-toolbar)] rounded-md hover:bg-[var(--bg-toolbar-hover)] flex items-center text-[var(--fg-toolbar)]"
+            className="p-1.5 text-sm font-medium border border-[var(--border-toolbar)] rounded-md hover:bg-[var(--bg-toolbar-hover)] flex items-center text-[var(--fg-toolbar)] transition-colors"
             title="Clone active tab"
           >
             <Copy size={16} />

@@ -9,10 +9,12 @@ import { TextAlign } from '@tiptap/extension-text-align';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import { TableKit } from "@tiptap/extension-table";
+import { Placeholder } from '@tiptap/extension-placeholder';
 import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
 
 import { MathliveExtension } from './plugins/MathliveExtension';
 import { ChartExtension } from './plugins/ChartExtension';
+import { SlashCommands } from './plugins/SlashCommands';
 import { EditorToolbar } from './EditorToolbar';
 import { VerticalToolbar } from './VerticalToolbar';
 
@@ -46,6 +48,18 @@ export default function TiptapEditor({
     }),
     MathliveExtension, 
     ChartExtension,
+    SlashCommands,
+    Placeholder.configure({
+      placeholder: ({ node }) => {
+        if (node.type.name === 'heading') {
+          return `Heading ${node.attrs.level}`;
+        }
+        return 'Write something...';
+      },
+      showOnlyWhenEditable: true,
+      includeChildren: true,
+      
+    }),
     ImagePlus.configure({
       wrapperStyle: { cursor: 'pointer' },
       containerStyle: { padding: "25px", borderRadius: "10px" },
@@ -78,7 +92,6 @@ export default function TiptapEditor({
     htmlDirty,
     setHtmlDirty,
     isPromptCopied,
-    insertCoverPage,
     insertImageFromUrl,
     insertStoredImage,
     onUploadImage,
@@ -174,13 +187,11 @@ export default function TiptapEditor({
       `}} />
 
       <EditorToolbar 
-
         editor={editor}
         savedImages={savedImages}
         showHtmlView={showHtmlView}
         htmlDirty={htmlDirty}
         isPromptCopied={isPromptCopied}
-        onInsertCoverPage={insertCoverPage}
         onInsertImageFromUrl={insertImageFromUrl}
         onInsertStoredImage={insertStoredImage}
         onClearStoredImages={clearStoredImages}

@@ -19,20 +19,20 @@
   --fg-toolbar-hover: #111827;
   --bg-toolbar-active: #2563eb;
   --fg-toolbar-active: #ffffff;
-  
+
   --bg-editor-canvas: #f3f4f6;
   --bg-editor-page: #ffffff;
   --fg-editor-page: #000000;
   --shadow-editor-page: 0 10px 30px rgba(0, 0, 0, 0.08);
-  
+
   --bg-popover: #ffffff;
   --fg-popover: #374151;
   --border-popover: #e5e7eb;
-  
+
   --bg-input: #ffffff;
   --fg-input: #111827;
   --border-input: #d1d5db;
-
+  --fg-placeholder: #9ca3af;
   --bg-table-header: #eeeeee;
   --border-table: #000000;
   --fg-table: #000000;
@@ -53,20 +53,20 @@
   --fg-toolbar-hover: #ffffff;
   --bg-toolbar-active: #3b82f6;
   --fg-toolbar-active: #ffffff;
-  
+
   --bg-editor-canvas: #111827;
   --bg-editor-page: #1f2937;
   --fg-editor-page: #f3f4f6;
   --shadow-editor-page: 0 10px 30px rgba(0, 0, 0, 0.5);
-  
+
   --bg-popover: #1f2937;
   --fg-popover: #f3f4f6;
   --border-popover: #374151;
-  
+
   --bg-input: #374151;
   --fg-input: #ffffff;
   --border-input: #4b5563;
-
+  --fg-placeholder: #4b5563;
   --bg-table-header: #374151;
   --border-table: #4b5563;
   --fg-table: #f3f4f6;
@@ -88,20 +88,20 @@
   --fg-toolbar-hover: #ffffff;
   --bg-toolbar-active: #3b82f6;
   --fg-toolbar-active: #ffffff;
-  
+
   --bg-editor-canvas: #111827;
   --bg-editor-page: #ffffff;
   --fg-editor-page: #000000;
   --shadow-editor-page: 0 10px 30px rgba(0, 0, 0, 0.5);
-  
+
   --bg-popover: #1f2937;
   --fg-popover: #f3f4f6;
   --border-popover: #374151;
-  
+
   --bg-input: #374151;
   --fg-input: #ffffff;
   --border-input: #4b5563;
-
+ --fg-placeholder: #9ca3af;
   --bg-table-header: #eeeeee;
   --border-table: #000000;
   --fg-table: #000000;
@@ -125,6 +125,16 @@
   margin-bottom: 40px !important;
   box-shadow: none;
 }
+
+/* Placeholder styling */
+.tiptap .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--fg-placeholder);
+  pointer-events: none;
+  height: 0;
+}
+
 
 .tiptap:focus {
   outline: none !important;
@@ -412,3 +422,4 @@ body {
     border: 1px solid black !important;
   }
 } */
+

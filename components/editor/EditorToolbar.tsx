@@ -12,11 +12,10 @@ import {
   Trash2, ChevronDown, Link2, Upload, Columns2, Rows2,
   TableCellsMerge, TableCellsSplit, Square, ArrowRight, ArrowLeft,
   Wrench, Grid2X2, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  BarChart3, FileText, Copy,
+  BarChart3, Copy,
   Code,
   CodeXml,
 } from 'lucide-react';
-import { COVER_TEMPLATES } from './constants';
 
 interface MenuButtonProps {
   onClick?: () => void;
@@ -52,7 +51,6 @@ interface EditorToolbarProps {
   showHtmlView: boolean;
   htmlDirty: boolean;
   isPromptCopied: boolean;
-  onInsertCoverPage: (key: keyof typeof COVER_TEMPLATES) => void;
   onInsertImageFromUrl: (url: string) => void;
   onInsertStoredImage: (src: string) => void;
   onClearStoredImages: () => void;
@@ -67,7 +65,6 @@ export const EditorToolbar = React.memo(function EditorToolbar({
   savedImages,
   showHtmlView,
   isPromptCopied,
-  onInsertCoverPage,
   onInsertImageFromUrl,
   onInsertStoredImage,
   onClearStoredImages,
@@ -79,7 +76,6 @@ export const EditorToolbar = React.memo(function EditorToolbar({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
-  const [showCoverMenu, setShowCoverMenu] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
 
@@ -244,27 +240,6 @@ export const EditorToolbar = React.memo(function EditorToolbar({
                 <Grid2X2 size={16} /> Insert 3x3 Table
               </button>
             </div>
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
-
-      <Popover.Root open={showCoverMenu} onOpenChange={setShowCoverMenu}>
-        <Popover.Trigger asChild>
-          <div className="relative">
-            <button className="ml-2 p-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-1.5 px-3 shadow-sm shrink-0">
-              <FileText size={18} /> <span className="text-sm font-bold">CoverPage</span>
-              <ChevronDown size={14} className={cn("ml-1 transition-transform", showCoverMenu && "rotate-180")} />
-            </button>
-          </div>
-        </Popover.Trigger>
-        <Popover.Portal>
-          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-[var(--bg-popover)] border border-[var(--border-popover)] rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[120px] animate-in fade-in zoom-in duration-200">
-            {Object.keys(COVER_TEMPLATES).map((key) => (
-              <button key={key} onClick={() => { onInsertCoverPage(key as keyof typeof COVER_TEMPLATES); setShowCoverMenu(false); }}
-                className="px-4 py-2 text-sm font-medium text-[var(--fg-popover)] hover:bg-[var(--bg-toolbar-hover)] rounded-md text-left transition-colors">
-                {key}
-              </button>
-            ))}
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>

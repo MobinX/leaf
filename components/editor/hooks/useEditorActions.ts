@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
-import { COVER_TEMPLATES, LAB_REPORT_PROMPT_TEXT } from '../constants';
+import { LAB_REPORT_PROMPT_TEXT } from '../constants';
 
 export function useEditorActions(
   editor: Editor | null,
@@ -10,10 +10,6 @@ export function useEditorActions(
   const [htmlOutput, setHtmlOutput] = useState('');
   const [htmlDirty, setHtmlDirty] = useState(false);
   const [isPromptCopied, setIsPromptCopied] = useState(false);
-
-  const insertCoverPage = useCallback((key: keyof typeof COVER_TEMPLATES) => {
-    editor?.chain().focus().insertContentAt(0, COVER_TEMPLATES[key]).run();
-  }, [editor]);
 
   const insertImageFromUrl = useCallback((url: string) => {
     const src = url.trim();
@@ -83,7 +79,6 @@ export function useEditorActions(
     htmlDirty,
     setHtmlDirty,
     isPromptCopied,
-    insertCoverPage,
     insertImageFromUrl,
     insertStoredImage,
     onUploadImage,

@@ -73,7 +73,7 @@ export default function DynamicEditorPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-app)] pb-12">
+    <main className="min-h-screen bg-[var(--bg-app)]">
       {document.tabs.map((tab) => (
         <div 
           key={tab.id} 

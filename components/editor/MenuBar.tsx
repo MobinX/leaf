@@ -131,15 +131,15 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
       <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
 
       <MenuButton 
-        onClick={() => editor.chain().focus().toggleHeadingOne().run()}
-        isActive={editor.isActive('headingOne')}
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        isActive={editor.isActive('heading', { level: 1 })}
         title="Heading 1"
       >
         <Heading1 size={18} />
       </MenuButton>
       <MenuButton 
-        onClick={() => editor.chain().focus().toggleHeadingTwo().run()}
-        isActive={editor.isActive('headingTwo')}
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        isActive={editor.isActive('heading', { level: 2 })}
         title="Heading 2"
       >
         <Heading2 size={18} />

@@ -54,7 +54,7 @@ export default function TiptapEditor({
       pageHeight: PAGE_SIZES.A4.pageHeight,
       pageWidth: PAGE_SIZES.A4.pageWidth,
       pageGap: 20,
-      pageBreakBackground: "#f3f4f6",
+      pageBreakBackground: "var(--bg-app)",
       marginTop: 20,
       marginBottom: 20,
       marginLeft: 50,
@@ -90,8 +90,8 @@ export default function TiptapEditor({
   if (!editor) return null;
 
   return (
-    <div className="flex flex-col h-screen bg-[#f5f5f7] overflow-hidden" data-theme="light">
-      <style dangerouslySetInnerHTML={{
+    <div className="flex flex-col h-screen bg-[var(--bg-app)] overflow-hidden " data-print="true">
+       <style dangerouslySetInnerHTML={{
         __html: `
         .tiptap-page { 
           background-color: #ffffff !important; 
@@ -104,7 +104,7 @@ export default function TiptapEditor({
         }
 
         @media print {
-          @page { size: A4; margin: 0; }
+          @page { size: A4; margin: 20px 50px !important; }
           body * { visibility: hidden !important; }
           #printableArea, #printableArea * { visibility: visible !important; }
           body, html, #__next, main {
@@ -114,7 +114,7 @@ export default function TiptapEditor({
             margin: 0 !important;
             padding: 0 !important;
           }
-          [data-theme="light"] {
+          [data-print="true"] {
             height: auto !important;
             min-height: 0 !important;
             overflow: visible !important;
@@ -173,7 +173,8 @@ export default function TiptapEditor({
         }
       `}} />
 
-      <EditorToolbar
+      <EditorToolbar 
+
         editor={editor}
         savedImages={savedImages}
         showHtmlView={showHtmlView}
@@ -199,7 +200,7 @@ export default function TiptapEditor({
                 setHtmlOutput(event.target.value);
                 setHtmlDirty(true);
               }}
-              className="w-full h-[72vh] bg-[#111827] text-emerald-100 rounded-xl border border-gray-700 p-4 text-sm leading-6 font-mono shadow-lg outline-none"
+              className="w-full h-[72vh] bg-[var(--bg-input)] text-[var(--fg-input)] rounded-xl border border-[var(--border-input)] p-4 text-sm leading-6 font-mono shadow-lg outline-none"
             />
           ) : (
             <EditorContent editor={editor} />

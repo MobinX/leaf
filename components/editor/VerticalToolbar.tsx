@@ -32,8 +32,8 @@ const MenuButton = ({
     className={cn(
       "w-7 h-7 rounded-lg transition-all flex items-center justify-center shrink-0 border",
       isActive 
-        ? "bg-blue-100 text-blue-700 border-blue-200 shadow-sm" 
-        : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900",
+        ? "bg-[var(--bg-toolbar-active)] text-[var(--fg-toolbar-active)] border-[var(--bg-toolbar-active)] shadow-sm" 
+        : "bg-[var(--bg-toolbar)] text-[var(--fg-toolbar)] border-transparent hover:bg-[var(--bg-toolbar-hover)] hover:text-[var(--fg-toolbar-hover)]",
       className
     )}
   >
@@ -50,7 +50,7 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
   const activeHeading = headingOptions.find(level => editor.isActive('heading', { level }));
 
   return (
-    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl shadow-xl p-1.5 flex flex-col gap-1 w-12 items-center animate-in fade-in slide-in-from-left-4 duration-500">
+    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 bg-[var(--bg-toolbar)]/95 backdrop-blur-md border border-[var(--border-toolbar)] rounded-2xl shadow-xl p-1.5 flex flex-col gap-1 w-12 items-center animate-in fade-in slide-in-from-left-4 duration-500">
       {/* Headings Popover */}
       <Popover.Root open={showHeadings} onOpenChange={setShowHeadings}>
         <Popover.Trigger asChild>
@@ -59,8 +59,8 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
             className={cn(
               "w-7 h-7 rounded-lg transition-all flex flex-col items-center justify-center border shrink-0",
               showHeadings || activeHeading
-                ? "bg-blue-50 text-blue-700 border-blue-100" 
-                : "bg-white text-gray-500 border-transparent hover:bg-gray-100"
+                ? "bg-[var(--bg-toolbar-active)] text-[var(--fg-toolbar-active)] border-[var(--bg-toolbar-active)]" 
+                : "bg-[var(--bg-toolbar)] text-[var(--fg-toolbar)] border-transparent hover:bg-[var(--bg-toolbar-hover)]"
             )}
           >
             <div className="relative flex items-center justify-center">
@@ -77,7 +77,7 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
           <Popover.Content 
             side="right" 
             sideOffset={16} 
-            className="bg-white border border-gray-100 rounded-2xl shadow-2xl p-2 z-[100] flex gap-1.5 animate-in fade-in slide-in-from-left-2 duration-300 ring-1 ring-black/5"
+            className="bg-[var(--bg-popover)] border border-[var(--border-popover)] rounded-2xl shadow-2xl p-2 z-[100] flex gap-1.5 animate-in fade-in slide-in-from-left-2 duration-300 ring-1 ring-black/5"
           >
             {headingOptions.map(level => (
               <button 
@@ -90,8 +90,8 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
                 className={cn(
                   "w-10 h-10 flex items-center justify-center text-sm font-bold rounded-xl transition-all border shrink-0",
                   editor.isActive('heading', { level }) 
-                    ? "bg-blue-600 text-white border-blue-700 shadow-md scale-105" 
-                    : "bg-gray-50 text-gray-600 border-transparent hover:bg-gray-200 hover:text-gray-900"
+                    ? "bg-[var(--bg-toolbar-active)] text-[var(--fg-toolbar-active)] border-[var(--bg-toolbar-active)] shadow-md scale-105" 
+                    : "bg-[var(--bg-toolbar-hover)] text-[var(--fg-popover)] border-transparent hover:bg-[var(--bg-toolbar-active)] hover:text-[var(--fg-toolbar-active)]"
                 )}
               >
                 H{level}
@@ -101,7 +101,7 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
         </Popover.Portal>
       </Popover.Root>
 
-      <div className="w-8 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-1" />
+      <div className="w-8 h-px bg-gradient-to-r from-transparent via-[var(--border-toolbar)] to-transparent my-1" />
 
       {/* Basic Formatting */}
       <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold (Ctrl+B / Cmd+B)"><Bold size={19} /></MenuButton>

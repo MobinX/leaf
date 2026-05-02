@@ -9,21 +9,119 @@
   }
 }
 
-/* Force light mode colors for the entire application */
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
+  /* Light Theme Defaults */
+  --bg-app: #f3f4f6;
+  --bg-toolbar: #ffffff;
+  --fg-toolbar: #374151;
+  --border-toolbar: #e5e7eb;
+  --bg-toolbar-hover: #f3f4f6;
+  --fg-toolbar-hover: #111827;
+  --bg-toolbar-active: #2563eb;
+  --fg-toolbar-active: #ffffff;
+  
+  --bg-editor-canvas: #f3f4f6;
+  --bg-editor-page: #ffffff;
+  --fg-editor-page: #000000;
+  --shadow-editor-page: 0 10px 30px rgba(0, 0, 0, 0.08);
+  
+  --bg-popover: #ffffff;
+  --fg-popover: #374151;
+  --border-popover: #e5e7eb;
+  
+  --bg-input: #ffffff;
+  --fg-input: #111827;
+  --border-input: #d1d5db;
+
+  --bg-table-header: #eeeeee;
+  --border-table: #000000;
+  --fg-table: #000000;
+
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+
+  --background: var(--bg-app);
+  --foreground: var(--fg-editor-page);
+}
+
+[data-theme='dark'] {
+  --bg-app: #111827;
+  --bg-toolbar: #1f2937;
+  --fg-toolbar: #f3f4f6;
+  --border-toolbar: #374151;
+  --bg-toolbar-hover: #374151;
+  --fg-toolbar-hover: #ffffff;
+  --bg-toolbar-active: #3b82f6;
+  --fg-toolbar-active: #ffffff;
+  
+  --bg-editor-canvas: #111827;
+  --bg-editor-page: #1f2937;
+  --fg-editor-page: #f3f4f6;
+  --shadow-editor-page: 0 10px 30px rgba(0, 0, 0, 0.5);
+  
+  --bg-popover: #1f2937;
+  --fg-popover: #f3f4f6;
+  --border-popover: #374151;
+  
+  --bg-input: #374151;
+  --fg-input: #ffffff;
+  --border-input: #4b5563;
+
+  --bg-table-header: #374151;
+  --border-table: #4b5563;
+  --fg-table: #f3f4f6;
+
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+
+  --background: var(--bg-app);
+  --foreground: var(--fg-editor-page);
+}
+
+[data-theme='hybrid'] {
+  /* Hybrid: Bars and Wrappers are Dark, Editor is Light */
+  --bg-app: #111827;
+  --bg-toolbar: #1f2937;
+  --fg-toolbar: #f3f4f6;
+  --border-toolbar: #374151;
+  --bg-toolbar-hover: #374151;
+  --fg-toolbar-hover: #ffffff;
+  --bg-toolbar-active: #3b82f6;
+  --fg-toolbar-active: #ffffff;
+  
+  --bg-editor-canvas: #111827;
+  --bg-editor-page: #ffffff;
+  --fg-editor-page: #000000;
+  --shadow-editor-page: 0 10px 30px rgba(0, 0, 0, 0.5);
+  
+  --bg-popover: #1f2937;
+  --fg-popover: #f3f4f6;
+  --border-popover: #374151;
+  
+  --bg-input: #374151;
+  --fg-input: #ffffff;
+  --border-input: #4b5563;
+
+  --bg-table-header: #eeeeee;
+  --border-table: #000000;
+  --fg-table: #000000;
+
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+
+  --background: var(--bg-app);
+  --foreground: var(--fg-editor-page);
 }
 
 /* AGGRESSIVE EDITOR STYLING */
 .tiptap-page-container {
-  background-color: #f3f4f6 !important;
-  color-scheme: light !important;
+  background-color: var(--bg-editor-canvas) !important;
+  color-scheme: light dark !important;
 }
 
 .tiptap {
-  background-color: white !important;
-  color: black !important;
+  background-color: var(--bg-editor-page) !important;
+  color: var(--fg-editor-page) !important;
   margin-bottom: 40px !important;
   box-shadow: none;
 }
@@ -32,7 +130,7 @@
   outline: none !important;
 }
 
-/* 1. Force Headings to be HUGE and BOLD */
+/* 1. Force Headings */
 .ProseMirror h1,
 .tiptap-page h1,
 h1 {
@@ -42,7 +140,7 @@ h1 {
   line-height: 1.2 !important;
   margin-top: 20pt !important;
   margin-bottom: 10pt !important;
-  color: black !important;
+  color: var(--fg-editor-page) !important;
   text-align: left !important;
 }
 
@@ -54,10 +152,10 @@ h2 {
   font-weight: 700 !important;
   margin-top: 18pt !important;
   margin-bottom: 8pt !important;
-  color: black !important;
+  color: var(--fg-editor-page) !important;
 }
 
-/* 2. Force Tables to have BLACK BORDERS */
+/* 2. Force Tables */
 .ProseMirror table,
 .tiptap-page table,
 table {
@@ -66,19 +164,8 @@ table {
   overflow: hidden !important;
   margin: 1em 0 !important;
   width: 100%;
-  border: 2px solid black !important;
+  border: 2px solid var(--border-table) !important;
 }
-
-/* .ProseMirror .tableWrapper,
-.tiptap-page .tableWrapper {
-  overflow-x: auto !important;
-  width: 100%;
-}
-
-.ProseMirror .tiptap-full-width-table,
-.tiptap-page .tiptap-full-width-table {
-  width: 100%;
-} */
 
 /* Restore native ProseMirror table layout for PaginationPlus */
 .rm-with-pagination table {
@@ -107,10 +194,10 @@ table {
 .tiptap-page th,
 td,
 th {
-  border: 1px solid black !important;
+  border: 1px solid var(--border-table) !important;
   padding: 10px !important;
   min-width: 1em !important;
-  color: black !important;
+  color: var(--fg-table) !important;
   background-color: transparent !important;
   position: relative !important;
 }
@@ -122,7 +209,7 @@ th {
   right: -2px !important;
   bottom: -2px !important;
   width: 4px !important;
-  background-color: #3b82f6 !important;
+  background-color: var(--accent) !important;
   pointer-events: none !important;
   z-index: 20 !important;
 }
@@ -146,11 +233,11 @@ th {
 
 .ProseMirror th,
 th {
-  background-color: #eeeeee !important;
+  background-color: var(--bg-table-header) !important;
   font-weight: bold !important;
 }
 
-/* 3. Force Lists to show DOTS and NUMBERS */
+/* 3. Force Lists */
 .ProseMirror ul,
 ul {
   list-style-type: disc !important;
@@ -170,24 +257,23 @@ ol {
 .ProseMirror li,
 li {
   display: list-item !important;
-  color: black !important;
+  color: var(--fg-editor-page) !important;
 }
 
-/* 4. Force Blockquote visibility */
+/* 4. Force Blockquote */
 .ProseMirror blockquote,
 blockquote {
-  border-left: 5px solid #444 !important;
+  border-left: 5px solid var(--fg-editor-page) !important;
   padding-left: 15pt !important;
   margin: 15pt 0 !important;
   font-style: italic !important;
-  color: #333 !important;
+  color: var(--fg-editor-page) !important;
+  opacity: 0.8;
 }
-
-
 
 /* Mathfield styling */
 math-field {
-  color: black;
+  color: var(--fg-editor-page);
   border-radius: 4px;
   vertical-align: middle;
   overflow: visible;
@@ -206,18 +292,16 @@ math-field::part(content) {
   overflow: visible !important;
 }
 
-
 body {
-  background-color: #f3f4f6;
-  color: black;
+  background-color: var(--bg-app);
+  color: var(--fg-editor-page);
   font-family: sans-serif;
 }
 
 .tiptap-page {
-
-  background-color: #ffffff !important;
-  color: black !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  background-color: var(--bg-editor-page) !important;
+  color: var(--fg-editor-page) !important;
+  box-shadow: var(--shadow-editor-page) !important;
   margin-bottom: 40px !important;
   padding: 2cm !important;
   min-height: 29.7cm !important;
@@ -225,7 +309,7 @@ body {
 }
 
 /* PRINT CONFIGURATION */
-@media print {
+/* @media print {
   @page {
     size: A4;
     margin: 0;
@@ -251,7 +335,7 @@ body {
     padding: 0 !important;
   }
 
-  [data-theme="light"] {
+  [data-theme] {
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
@@ -313,7 +397,6 @@ body {
     page-break-after: auto !important;
   }
 
-  /* Ensure black text and visible borders on print */
   h1,
   h2,
   p,
@@ -328,4 +411,4 @@ body {
   table {
     border: 1px solid black !important;
   }
-}
+} */

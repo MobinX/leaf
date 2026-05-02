@@ -34,7 +34,9 @@ const MenuButton = ({ onClick, isActive = false, children, title, className, pre
     title={title}
     className={cn(
       "p-2 rounded-md transition-all flex items-center justify-center shrink-0 min-w-[36px] min-h-[36px]",
-      isActive ? "bg-blue-600 text-white shadow-md" : "hover:bg-gray-100 text-gray-700",
+      isActive 
+        ? "bg-[var(--bg-toolbar-active)] text-[var(--fg-toolbar-active)] shadow-md" 
+        : "hover:bg-[var(--bg-toolbar-hover)] text-[var(--fg-toolbar)]",
       className
     )}
   >
@@ -124,17 +126,17 @@ export const EditorToolbar = React.memo(function EditorToolbar({
   ];
 
   return (
-    <div className="flex-none w-full bg-white border-b p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
+    <div className="flex-none w-full bg-[var(--bg-toolbar)] border-b border-[var(--border-toolbar)] p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
       <MenuButton onClick={() => editor.chain().focus().undo().run()} title="Undo (Ctrl+Z / Cmd+Z)"><Undo size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().redo().run()} title="Redo (Ctrl+Shift+Z / Cmd+Shift+Z)"><Redo size={18} /></MenuButton>
-      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
 
       <MenuButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left (Ctrl+Shift+L / Cmd+Shift+L)"><AlignLeft size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Align Center (Ctrl+Shift+E / Cmd+Shift+E)"><AlignCenter size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align Right (Ctrl+Shift+R / Cmd+Shift+R)"><AlignRight size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify (Ctrl+Shift+J / Cmd+Shift+J)"><AlignJustify size={18} /></MenuButton>
-      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <Popover.Root open={showFontSizeMenu} onOpenChange={setShowFontSizeMenu}>
         <Popover.Trigger asChild>
@@ -146,10 +148,13 @@ export const EditorToolbar = React.memo(function EditorToolbar({
           </div>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[80px] max-h-[300px] overflow-y-auto animate-in fade-in zoom-in duration-200">
+          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-[var(--bg-popover)] border border-[var(--border-popover)] rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[80px] max-h-[300px] overflow-y-auto animate-in fade-in zoom-in duration-200">
             {['8pt', '9pt', '10pt', '11pt', '12pt', '14pt', '16pt', '18pt', '24pt', '30pt', '36pt', '48pt', '60pt', '72pt'].map((size) => (
               <button key={size} onClick={(e) => { e.preventDefault(); editor.chain().focus().setMark('textStyle', { fontSize: size }).run(); setShowFontSizeMenu(false); }}
-                className={cn("px-3 py-1.5 text-xs font-medium rounded-md text-left transition-colors", editor.getAttributes('textStyle').fontSize === size ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100")}>
+                className={cn("px-3 py-1.5 text-xs font-medium rounded-md text-left transition-colors", 
+                  editor.getAttributes('textStyle').fontSize === size 
+                    ? "bg-[var(--bg-toolbar-active)] text-[var(--fg-toolbar-active)]" 
+                    : "text-[var(--fg-popover)] hover:bg-[var(--bg-toolbar-hover)]")}>
                 {size.replace('pt', '')}
               </button>
             ))}
@@ -172,14 +177,14 @@ export const EditorToolbar = React.memo(function EditorToolbar({
           </div>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-3 z-[100] w-[360px] animate-in fade-in zoom-in duration-200 space-y-3">
+          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-[var(--bg-popover)] border border-[var(--border-popover)] rounded-md shadow-xl p-3 z-[100] w-[360px] animate-in fade-in zoom-in duration-200 space-y-3">
             <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-gray-700">Insert by URL</div>
+              <div className="text-xs font-semibold text-[var(--fg-popover)]">Insert by URL</div>
               <div className="flex gap-2">
                 <input type="url" value={imageUrl} placeholder="https://example.com/image.png"
                   onChange={(e) => setImageUrl(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onInsertImageFromUrl(imageUrl); setImageUrl(''); setShowImageMenu(false); } }}
-                  className="flex-1 h-9 px-2.5 border rounded-md text-xs outline-none focus:ring-2 focus:ring-blue-200" />
+                  className="flex-1 h-9 px-2.5 bg-[var(--bg-input)] text-[var(--fg-input)] border border-[var(--border-input)] rounded-md text-xs outline-none focus:ring-2 focus:ring-blue-200" />
                 <button onClick={() => { onInsertImageFromUrl(imageUrl); setImageUrl(''); setShowImageMenu(false); }}
                   className="h-9 px-3 rounded-md bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 inline-flex items-center gap-1.5">
                   <Link2 size={14} /> Add
@@ -187,7 +192,7 @@ export const EditorToolbar = React.memo(function EditorToolbar({
               </div>
             </div>
             <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-gray-700">Upload from device</div>
+              <div className="text-xs font-semibold text-[var(--fg-popover)]">Upload from device</div>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => { onUploadImage(e); setShowImageMenu(false); }} className="hidden" />
               <button onClick={() => fileInputRef.current?.click()}
                 className="w-full h-9 px-3 rounded-md border border-dashed border-blue-300 text-blue-700 text-xs font-semibold hover:bg-blue-50 inline-flex items-center justify-center gap-2">
@@ -197,13 +202,13 @@ export const EditorToolbar = React.memo(function EditorToolbar({
             {savedImages.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold text-gray-700">Saved uploads</div>
+                  <div className="text-xs font-semibold text-[var(--fg-popover)]">Saved uploads</div>
                   <button onClick={onClearStoredImages} className="text-[11px] text-red-600 hover:text-red-700 font-medium">Clear</button>
                 </div>
                 <div className="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto">
                   {savedImages.map((image) => (
                     <button key={image.id} onClick={() => { onInsertStoredImage(image.src); setShowImageMenu(false); }}
-                      className="h-16 border rounded-md overflow-hidden hover:border-blue-400" title="Insert saved image">
+                      className="h-16 border border-[var(--border-popover)] rounded-md overflow-hidden hover:border-blue-400" title="Insert saved image">
                       <img src={image.src} alt="Saved upload" className="w-full h-full object-cover" />
                     </button>
                   ))}
@@ -225,15 +230,15 @@ export const EditorToolbar = React.memo(function EditorToolbar({
           </div>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-3 z-[100] grid grid-cols-3 gap-2 min-w-[320px] animate-in fade-in zoom-in duration-200">
+          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-[var(--bg-popover)] border border-[var(--border-popover)] rounded-md shadow-xl p-3 z-[100] grid grid-cols-3 gap-2 min-w-[320px] animate-in fade-in zoom-in duration-200">
             {tableActions.map((action, i) => (
               <button key={i} onClick={(e) => { e.preventDefault(); action.onClick(); setShowTableMenu(false); }}
-                className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 rounded-lg text-[10px] text-gray-600 hover:text-blue-600 gap-1.5 transition-all border border-transparent hover:border-blue-100 group">
-                <div className="p-1.5 bg-gray-50 rounded group-hover:bg-blue-50 transition-colors">{action.icon}</div>
+                className="flex flex-col items-center justify-center p-2 hover:bg-[var(--bg-toolbar-hover)] rounded-lg text-[10px] text-[var(--fg-popover)] hover:text-blue-600 gap-1.5 transition-all border border-transparent hover:border-blue-100 group">
+                <div className="p-1.5 bg-[var(--bg-toolbar-hover)] rounded group-hover:bg-blue-50 transition-colors">{action.icon}</div>
                 <span className="text-center font-medium leading-tight">{action.label}</span>
               </button>
             ))}
-            <div className="col-span-3 border-t mt-1 pt-2">
+            <div className="col-span-3 border-t border-[var(--border-popover)] mt-1 pt-2">
               <button onClick={(e) => { e.preventDefault(); editor.chain().focus().insertTable({ rows: 3, cols: 3 }).run(); setShowTableMenu(false); }}
                 className="w-full flex items-center justify-center p-2.5 hover:bg-blue-50 rounded-lg text-xs font-bold text-blue-600 gap-2 transition-colors border border-dashed border-blue-200">
                 <Grid2X2 size={16} /> Insert 3x3 Table
@@ -253,10 +258,10 @@ export const EditorToolbar = React.memo(function EditorToolbar({
           </div>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[120px] animate-in fade-in zoom-in duration-200">
+          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-[var(--bg-popover)] border border-[var(--border-popover)] rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[120px] animate-in fade-in zoom-in duration-200">
             {Object.keys(COVER_TEMPLATES).map((key) => (
               <button key={key} onClick={() => { onInsertCoverPage(key as keyof typeof COVER_TEMPLATES); setShowCoverMenu(false); }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md text-left transition-colors">
+                className="px-4 py-2 text-sm font-medium text-[var(--fg-popover)] hover:bg-[var(--bg-toolbar-hover)] rounded-md text-left transition-colors">
                 {key}
               </button>
             ))}

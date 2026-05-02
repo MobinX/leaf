@@ -58,22 +58,22 @@ export default function DynamicEditorPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="text-lg font-medium text-gray-600 animate-pulse">Loading document...</div>
+      <div className="flex items-center justify-center h-screen bg-[var(--bg-app)]">
+        <div className="text-lg font-medium text-[var(--fg-toolbar)] animate-pulse">Loading document...</div>
       </div>
     );
   }
 
   if (!document) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="flex items-center justify-center h-screen bg-[var(--bg-app)]">
         <div className="text-lg font-medium text-red-600">Failed to load document</div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 pb-12">
+    <main className="min-h-screen bg-[var(--bg-app)] pb-12">
       {document.tabs.map((tab) => (
         <div 
           key={tab.id} 

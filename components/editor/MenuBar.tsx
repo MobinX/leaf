@@ -39,13 +39,13 @@ const MenuButton = ({
     className={cn(
       "p-2 rounded-md transition-all flex items-center justify-center shrink-0 min-w-[36px] min-h-[36px] border",
       isActive 
-        ? "bg-blue-600 text-white border-blue-700 shadow-inner scale-95" 
-        : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100 active:bg-gray-200",
+        ? "bg-[var(--bg-toolbar-active)] text-[var(--fg-toolbar-active)] border-[var(--bg-toolbar-active)] shadow-inner scale-95" 
+        : "bg-[var(--bg-toolbar)] text-[var(--fg-toolbar)] border-[var(--border-toolbar)] hover:bg-[var(--bg-toolbar-hover)] active:bg-[var(--bg-toolbar-hover)]",
       disabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
       className
     )}
   >
-    <span className={cn("flex items-center justify-center", isActive ? "text-white" : "text-gray-700")}>
+    <span className={cn("flex items-center justify-center", isActive ? "text-[var(--fg-toolbar-active)]" : "text-[var(--fg-toolbar)]")}>
       {children}
     </span>
   </button>
@@ -81,7 +81,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-2 py-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth">
+    <div className="sticky top-0 z-30 bg-[var(--bg-toolbar)] border-b border-[var(--border-toolbar)] px-2 py-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth">
       <MenuButton 
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
@@ -97,7 +97,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         <Redo size={18} />
       </MenuButton>
       
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <MenuButton 
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -128,7 +128,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         <Strikethrough size={18} />
       </MenuButton>
 
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <MenuButton 
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -145,7 +145,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         <Heading2 size={18} />
       </MenuButton>
 
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <MenuButton 
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -169,7 +169,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         <QuoteIcon size={18} />
       </MenuButton>
 
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <MenuButton 
         onClick={() => editor.chain().focus().toggleCode().run()}
@@ -186,7 +186,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         <CodeXml size={18} />
       </MenuButton>
 
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <MenuButton 
         onClick={addLink}
@@ -213,7 +213,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         <Table size={18} />
       </MenuButton>
 
-      <div className="w-[1px] h-6 bg-gray-300 mx-1 shrink-0" />
+      <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <MenuButton 
         onClick={() => editor.chain().focus().insertMath().run()}
@@ -222,7 +222,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         className={cn(
           "ml-2",
           editor.isActive('mathlive') 
-            ? "bg-blue-700 text-white shadow-md border-blue-800" 
+            ? "bg-[var(--bg-toolbar-active)] text-[var(--fg-toolbar-active)] shadow-md border-[var(--bg-toolbar-active)]" 
             : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm border-blue-700"
         )}
       >

@@ -59,8 +59,7 @@ interface EditorToolbarProps {
   onPrint: () => void;
   onCopyPrompt: () => void;
 }
-
-export const EditorToolbar = React.memo(function EditorToolbar({
+export const EditorToolbar = function EditorToolbar({
   editor,
   savedImages,
   showHtmlView,
@@ -73,6 +72,7 @@ export const EditorToolbar = React.memo(function EditorToolbar({
   onPrint,
   onCopyPrompt,
 }: EditorToolbarProps) {
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
@@ -121,6 +121,16 @@ export const EditorToolbar = React.memo(function EditorToolbar({
     { label: 'Del Table', icon: <Trash2 size={16} className="text-red-500" />, onClick: () => editor.chain().focus().deleteTable().run() },
   ];
 
+  const getActiveAlign = () => {
+    // Check headings and paragraphs specifically
+    if (editor.isActive('paragraph', { textAlign: 'center' }) || editor.isActive('heading', { textAlign: 'center' })) return 'center';
+    if (editor.isActive('paragraph', { textAlign: 'right' }) || editor.isActive('heading', { textAlign: 'right' })) return 'right';
+    if (editor.isActive('paragraph', { textAlign: 'justify' }) || editor.isActive('heading', { textAlign: 'justify' })) return 'justify';
+    return 'left';
+  };
+
+  const activeAlign = getActiveAlign();
+
   return (
     <div className="flex-none w-full bg-[var(--bg-toolbar)] border-b border-[var(--border-toolbar)] p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
       <MenuButton onClick={() => editor.chain().focus().undo().run()} title="Undo (Ctrl+Z / Cmd+Z)"><Undo size={18} /></MenuButton>
@@ -128,10 +138,34 @@ export const EditorToolbar = React.memo(function EditorToolbar({
       <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
 
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left (Ctrl+Shift+L / Cmd+Shift+L)"><AlignLeft size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Align Center (Ctrl+Shift+E / Cmd+Shift+E)"><AlignCenter size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align Right (Ctrl+Shift+R / Cmd+Shift+R)"><AlignRight size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify (Ctrl+Shift+J / Cmd+Shift+J)"><AlignJustify size={18} /></MenuButton>
+      <MenuButton 
+        onClick={() => editor.chain().focus().setTextAlign('left').run()} 
+        isActive={activeAlign === 'left'} 
+        title="Align Left (Ctrl+Shift+L / Cmd+Shift+L)"
+      >
+        <AlignLeft size={18} />
+      </MenuButton>
+      <MenuButton 
+        onClick={() => editor.chain().focus().setTextAlign('center').run()} 
+        isActive={activeAlign === 'center'} 
+        title="Align Center (Ctrl+Shift+E / Cmd+Shift+E)"
+      >
+        <AlignCenter size={18} />
+      </MenuButton>
+      <MenuButton 
+        onClick={() => editor.chain().focus().setTextAlign('right').run()} 
+        isActive={activeAlign === 'right'} 
+        title="Align Right (Ctrl+Shift+R / Cmd+Shift+R)"
+      >
+        <AlignRight size={18} />
+      </MenuButton>
+      <MenuButton 
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()} 
+        isActive={activeAlign === 'justify'} 
+        title="Justify (Ctrl+Shift+J / Cmd+Shift+J)"
+      >
+        <AlignJustify size={18} />
+      </MenuButton>
       <div className="w-[1px] h-6 bg-[var(--border-toolbar)] mx-1 shrink-0" />
 
       <Popover.Root open={showFontSizeMenu} onOpenChange={setShowFontSizeMenu}>
@@ -274,4 +308,4 @@ export const EditorToolbar = React.memo(function EditorToolbar({
       </button>
     </div>
   );
-});
+}

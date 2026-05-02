@@ -2,6 +2,7 @@ import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import { ReactRenderer } from '@tiptap/react';
 import tippy, { Instance, hideAll } from 'tippy.js';
+import Fuse from 'fuse.js';
 import { getAllCommandList } from '@/lib/editorCommands';
 import CommandList from './CommandList';
 
@@ -17,12 +18,18 @@ export const SlashCommands = Extension.create({
         char: '/',
         items: ({ query, editor }) => {
           const allCommands = getAllCommandList(editor);
-          return allCommands
-            .filter(item => 
-              item.title.toLowerCase().includes(query.toLowerCase()) ||
-              item.category?.toLowerCase().includes(query.toLowerCase())
-            )
-            .slice(0, 10);
+          
+          if (!query) {
+            return allCommands.slice(0, 10);
+          }
+
+          const fuse = new Fuse(allCommands, {
+            keys: ['title', 'category'],
+            threshold: 0.4,
+            distance: 100,
+          });
+
+          return fuse.search(query).map(result => result.item).slice(0, 10);
         },
         command: ({ editor, range, props }) => {
           props.command(range);

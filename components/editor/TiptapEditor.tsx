@@ -54,7 +54,7 @@ export default function TiptapEditor({
         if (node.type.name === 'heading') {
           return `Heading ${node.attrs.level}`;
         }
-        return 'Write something...';
+        return 'Type / to open command plate';
       },
       showOnlyWhenEditable: true,
       includeChildren: true,
@@ -80,7 +80,7 @@ export default function TiptapEditor({
     immediatelyRender: false,
     editable: true,
     extensions,
-    content: initialContent || `<h1>Stable Custom H1</h1><p>This editor is now print-optimized.</p>`,
+    content: initialContent || "<p></p>",
   });
 
   const { savedImages, addStoredImage, clearStoredImages } = useEditorImages();

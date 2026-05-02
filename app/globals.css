@@ -9,7 +9,7 @@
   }
 }
 
-:root {
+:root, [data-theme='light'] {
   /* Light Theme Defaults */
   --bg-app: #f3f4f6;
   --bg-toolbar: #ffffff;
@@ -33,6 +33,7 @@
   --fg-input: #111827;
   --border-input: #d1d5db;
   --fg-placeholder: #9ca3af;
+
   --bg-table-header: #eeeeee;
   --border-table: #000000;
   --fg-table: #000000;
@@ -43,6 +44,7 @@
   --background: var(--bg-app);
   --foreground: var(--fg-editor-page);
 }
+
 
 [data-theme='dark'] {
   --bg-app: #111827;
@@ -151,7 +153,7 @@ h1 {
   margin-top: 20pt !important;
   margin-bottom: 10pt !important;
   color: var(--fg-editor-page) !important;
-  text-align: left !important;
+  text-align: left;
 }
 
 .ProseMirror h2,
@@ -316,6 +318,15 @@ body {
   padding: 2cm !important;
   min-height: 29.7cm !important;
   box-sizing: border-box !important;
+}
+
+/* Tippy background fix */
+.tippy-box {
+  background-color: transparent !important;
+}
+
+.tippy-content {
+  padding: 0 !important;
 }
 
 /* PRINT CONFIGURATION */

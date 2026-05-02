@@ -5,8 +5,7 @@ import { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
 import {
-  Bold as BoldIcon, Italic as ItalicIcon, Underline as UnderlineIcon,
-  Heading3, List, ListOrdered,
+  Heading3,
   Table as TableIcon, Sigma, Undo, Redo,
   Image as ImageIcon, Printer, FileCode2,
   BetweenVerticalStartIcon, BetweenHorizonalStartIcon,
@@ -42,6 +41,7 @@ const MenuButton = ({ onClick, isActive = false, children, title, className, pre
 );
 
 interface StoredImage { id: string; src: string; createdAt: number };
+
 interface EditorToolbarProps {
   editor: Editor;
   savedImages: StoredImage[];
@@ -74,7 +74,6 @@ export const EditorToolbar = React.memo(function EditorToolbar({
 }: EditorToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTableMenu, setShowTableMenu] = useState(false);
-  const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [showCoverMenu, setShowCoverMenu] = useState(false);
   const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
@@ -122,34 +121,19 @@ export const EditorToolbar = React.memo(function EditorToolbar({
     { label: 'Del Table', icon: <Trash2 size={16} className="text-red-500" />, onClick: () => editor.chain().focus().deleteTable().run() },
   ];
 
-  const headingOptions = [
-    { level: 1, title: 'Heading 1' },
-    { level: 2, title: 'Heading 2' },
-    { level: 3, title: 'Heading 3' },
-    { level: 4, title: 'Heading 4' },
-    { level: 5, title: 'Heading 5' },
-    { level: 6, title: 'Heading 6' },
-  ] as const;
-
-  const activeHeading = headingOptions.find(o => editor.isActive('heading', { level: o.level }));
-
   return (
     <div className="flex-none w-full bg-white border-b p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
       <MenuButton onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undo size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().redo().run()} title="Redo"><Redo size={18} /></MenuButton>
       <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
-      <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold"><BoldIcon size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic"><ItalicIcon size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline"><UnderlineIcon size={18} /></MenuButton>
-      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left"><AlignLeft size={18} /></MenuButton>
+       <MenuButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left"><AlignLeft size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Align Center"><AlignCenter size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align Right"><AlignRight size={18} /></MenuButton>
       <MenuButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify"><AlignJustify size={18} /></MenuButton>
-      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
-
+      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />         
+      
       <Popover.Root open={showFontSizeMenu} onOpenChange={setShowFontSizeMenu}>
         <Popover.Trigger asChild>
           <div className="relative">
@@ -171,31 +155,7 @@ export const EditorToolbar = React.memo(function EditorToolbar({
         </Popover.Portal>
       </Popover.Root>
 
-      <Popover.Root open={showHeadingMenu} onOpenChange={setShowHeadingMenu}>
-        <Popover.Trigger asChild>
-          <div className="relative">
-            <MenuButton preventDefault={false} isActive={showHeadingMenu || !!activeHeading} title="Headings" className="gap-1 px-2">
-              <span className="text-xs font-semibold">{activeHeading?.level ?? 'H'}</span>
-              <ChevronDown size={14} className={cn("ml-1 transition-transform", showHeadingMenu && "rotate-180")} />
-            </MenuButton>
-          </div>
-        </Popover.Trigger>
-        <Popover.Portal>
-          <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[160px] animate-in fade-in zoom-in duration-200">
-            {headingOptions.map((option) => (
-              <button key={option.level} onClick={(e) => { e.preventDefault(); editor.chain().focus().toggleHeading({ level: option.level }).run(); setShowHeadingMenu(false); }}
-                className={cn("flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md text-left transition-colors", editor.isActive('heading', { level: option.level }) ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100")}>
-                <span className="font-semibold">H{option.level}</span>
-                <span className="text-xs text-gray-500">{option.title}</span>
-              </button>
-            ))}
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
-      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
-      <MenuButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List"><List size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Ordered List"><ListOrdered size={18} /></MenuButton>
 
       <Popover.Root open={showImageMenu} onOpenChange={setShowImageMenu}>
         <Popover.Trigger asChild>

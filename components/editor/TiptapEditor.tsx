@@ -12,6 +12,7 @@ import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
 import { MathliveExtension } from './plugins/MathliveExtension';
 import { ChartExtension } from './plugins/ChartExtension';
 import { EditorToolbar } from './EditorToolbar';
+import { VerticalToolbar } from './VerticalToolbar';
 
 import { useEditorImages } from './hooks/useEditorImages';
 import { useEditorStorage } from './hooks/useEditorStorage';
@@ -183,6 +184,7 @@ export default function TiptapEditor({
         onPrint={handlePrintClick}
         onCopyPrompt={copyLabPrompt}
       />
+      <VerticalToolbar editor={editor} />
 
       <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 flex flex-col items-center tiptap-page-container">
         <div className="w-full max-w-[21cm]">

@@ -13,6 +13,8 @@ import {
   TableCellsMerge, TableCellsSplit, Square, ArrowRight, ArrowLeft,
   Wrench, Grid2X2, AlignLeft, AlignCenter, AlignRight, AlignJustify,
   BarChart3, FileText, Copy,
+  Code,
+  CodeXml,
 } from 'lucide-react';
 import { COVER_TEMPLATES } from './constants';
 
@@ -123,17 +125,17 @@ export const EditorToolbar = React.memo(function EditorToolbar({
 
   return (
     <div className="flex-none w-full bg-white border-b p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm z-50 no-print">
-      <MenuButton onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undo size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().redo().run()} title="Redo"><Redo size={18} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().undo().run()} title="Undo (Ctrl+Z / Cmd+Z)"><Undo size={18} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().redo().run()} title="Redo (Ctrl+Shift+Z / Cmd+Shift+Z)"><Redo size={18} /></MenuButton>
       <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
 
 
-       <MenuButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left"><AlignLeft size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Align Center"><AlignCenter size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align Right"><AlignRight size={18} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify"><AlignJustify size={18} /></MenuButton>
-      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />         
-      
+      <MenuButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align Left (Ctrl+Shift+L / Cmd+Shift+L)"><AlignLeft size={18} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Align Center (Ctrl+Shift+E / Cmd+Shift+E)"><AlignCenter size={18} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align Right (Ctrl+Shift+R / Cmd+Shift+R)"><AlignRight size={18} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify (Ctrl+Shift+J / Cmd+Shift+J)"><AlignJustify size={18} /></MenuButton>
+      <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
+
       <Popover.Root open={showFontSizeMenu} onOpenChange={setShowFontSizeMenu}>
         <Popover.Trigger asChild>
           <div className="relative">
@@ -145,7 +147,7 @@ export const EditorToolbar = React.memo(function EditorToolbar({
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content sideOffset={5} side="bottom" align="start" className="bg-white border rounded-md shadow-xl p-2 z-[100] flex flex-col gap-1 min-w-[80px] max-h-[300px] overflow-y-auto animate-in fade-in zoom-in duration-200">
-            {['8pt','9pt','10pt','11pt','12pt','14pt','16pt','18pt','24pt','30pt','36pt','48pt','60pt','72pt'].map((size) => (
+            {['8pt', '9pt', '10pt', '11pt', '12pt', '14pt', '16pt', '18pt', '24pt', '30pt', '36pt', '48pt', '60pt', '72pt'].map((size) => (
               <button key={size} onClick={(e) => { e.preventDefault(); editor.chain().focus().setMark('textStyle', { fontSize: size }).run(); setShowFontSizeMenu(false); }}
                 className={cn("px-3 py-1.5 text-xs font-medium rounded-md text-left transition-colors", editor.getAttributes('textStyle').fontSize === size ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100")}>
                 {size.replace('pt', '')}
@@ -154,6 +156,9 @@ export const EditorToolbar = React.memo(function EditorToolbar({
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
+
+      <MenuButton onClick={() => editor.chain().focus().toggleCode().run()} isActive={editor.isActive('code')} title="Inline Code (Ctrl+E / Cmd+E)"><Code size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} isActive={editor.isActive('codeBlock')} title="Code Block (Ctrl+Alt+C / Cmd+Alt+C)"><CodeXml size={19} /></MenuButton>
 
 
 

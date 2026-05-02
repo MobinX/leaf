@@ -4,9 +4,8 @@ import { cn } from '@/lib/utils';
 import * as Popover from '@radix-ui/react-popover';
 import {
   Bold, Italic, Underline, List, ListOrdered,
-  Heading, Code, Quote as QuoteIcon,
-  CodeXml, Strikethrough, ChevronRight,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify
+  Heading, Quote as QuoteIcon,
+  Strikethrough, Subscript as SubscriptIcon, Superscript as SuperscriptIcon
 } from 'lucide-react';
 
 interface VerticalToolbarProps {
@@ -31,7 +30,7 @@ const MenuButton = ({
     onClick={(e) => { e.preventDefault(); onClick(); }}
     title={title}
     className={cn(
-      "w-9 h-9 rounded-lg transition-all flex items-center justify-center shrink-0 border",
+      "w-7 h-7 rounded-lg transition-all flex items-center justify-center shrink-0 border",
       isActive 
         ? "bg-blue-100 text-blue-700 border-blue-200 shadow-sm" 
         : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900",
@@ -58,7 +57,7 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
           <button 
             title="Headings"
             className={cn(
-              "w-9 h-10 rounded-lg transition-all flex flex-col items-center justify-center border shrink-0",
+              "w-7 h-7 rounded-lg transition-all flex flex-col items-center justify-center border shrink-0",
               showHeadings || activeHeading
                 ? "bg-blue-50 text-blue-700 border-blue-100" 
                 : "bg-white text-gray-500 border-transparent hover:bg-gray-100"
@@ -72,7 +71,6 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
                 </span>
               )}
             </div>
-            <ChevronRight size={10} className={cn("mt-0.5 transition-transform duration-200", showHeadings && "rotate-90")} />
           </button>
         </Popover.Trigger>
         <Popover.Portal>
@@ -106,26 +104,22 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
       <div className="w-8 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-1" />
 
       {/* Basic Formatting */}
-      <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold"><Bold size={19} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic"><Italic size={19} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline"><Underline size={19} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strike"><Strikethrough size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold (Ctrl+B / Cmd+B)"><Bold size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic (Ctrl+I / Cmd+I)"><Italic size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline (Ctrl+U / Cmd+U)"><Underline size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough (Ctrl+Shift+S / Cmd+Shift+S)"><Strikethrough size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleSubscript().run()} isActive={editor.isActive('subscript')} title="Subscript (Ctrl+, / Cmd+,)"><SubscriptIcon size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleSuperscript().run()} isActive={editor.isActive('superscript')} title="Superscript (Ctrl+. / Cmd+.)"><SuperscriptIcon size={19} /></MenuButton>
       
-      <div className="w-8 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-1" />
-
-      
-      <div className="w-8 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-1" />
-
+     
       {/* Lists & Quotes */}
-      <MenuButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List"><List size={19} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Ordered List"><ListOrdered size={19} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Quote"><QuoteIcon size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List (Ctrl+Shift+8 / Cmd+Shift+8)"><List size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Ordered List (Ctrl+Shift+7 / Cmd+Shift+7)"><ListOrdered size={19} /></MenuButton>
+      <MenuButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Blockquote (Ctrl+Shift+B / Cmd+Shift+B)"><QuoteIcon size={19} /></MenuButton>
       
       <div className="w-8 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-1" />
 
       {/* Code */}
-      <MenuButton onClick={() => editor.chain().focus().toggleCode().run()} isActive={editor.isActive('code')} title="Inline Code"><Code size={19} /></MenuButton>
-      <MenuButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} isActive={editor.isActive('codeBlock')} title="Code Block"><CodeXml size={19} /></MenuButton>
-    </div>
+       </div>
   );
 };

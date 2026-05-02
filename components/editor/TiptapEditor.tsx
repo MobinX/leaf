@@ -3,6 +3,8 @@
 import React, { useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { ImagePlus } from 'tiptap-image-plus';
+import { Subscript } from '@tiptap/extension-subscript';
+import { Superscript } from '@tiptap/extension-superscript';
 import { TextAlign } from '@tiptap/extension-text-align';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyleKit } from '@tiptap/extension-text-style';
@@ -32,6 +34,8 @@ export default function TiptapEditor({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
     }),
     TextStyleKit,
+    Subscript,
+    Superscript,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TableKit.configure({
       table: {

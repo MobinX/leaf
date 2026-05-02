@@ -3,6 +3,7 @@
 @utility no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -26,12 +27,13 @@
   margin-bottom: 40px !important;
   box-shadow: none;
 }
+
 .tiptap:focus {
-  outline:none !important;
+  outline: none !important;
 }
 
 /* 1. Force Headings to be HUGE and BOLD */
-.ProseMirror h1, 
+.ProseMirror h1,
 .tiptap-page h1,
 h1 {
   display: block !important;
@@ -44,7 +46,7 @@ h1 {
   text-align: left !important;
 }
 
-.ProseMirror h2, 
+.ProseMirror h2,
 .tiptap-page h2,
 h2 {
   display: block !important;
@@ -85,7 +87,7 @@ table {
   border-collapse: collapse !important;
 }
 
-.rm-with-pagination table > tr {
+.rm-with-pagination table>tr {
   display: table-row !important;
 }
 
@@ -95,15 +97,16 @@ table {
   overflow: visible !important;
 }
 
-.rm-with-pagination table tbody > tr {
+.rm-with-pagination table tbody>tr {
   display: table-row !important;
 }
 
-.ProseMirror td, 
+.ProseMirror td,
 .ProseMirror th,
 .tiptap-page td,
 .tiptap-page th,
-td, th {
+td,
+th {
   border: 1px solid black !important;
   padding: 10px !important;
   min-width: 1em !important;
@@ -141,33 +144,38 @@ td, th {
   cursor: col-resize !important;
 }
 
-.ProseMirror th, th {
+.ProseMirror th,
+th {
   background-color: #eeeeee !important;
   font-weight: bold !important;
 }
 
 /* 3. Force Lists to show DOTS and NUMBERS */
-.ProseMirror ul, ul {
+.ProseMirror ul,
+ul {
   list-style-type: disc !important;
   padding-left: 30pt !important;
   margin: 10pt 0 !important;
   display: block !important;
 }
 
-.ProseMirror ol, ol {
+.ProseMirror ol,
+ol {
   list-style-type: decimal !important;
   padding-left: 30pt !important;
   margin: 10pt 0 !important;
   display: block !important;
 }
 
-.ProseMirror li, li {
+.ProseMirror li,
+li {
   display: list-item !important;
   color: black !important;
 }
 
 /* 4. Force Blockquote visibility */
-.ProseMirror blockquote, blockquote {
+.ProseMirror blockquote,
+blockquote {
   border-left: 5px solid #444 !important;
   padding-left: 15pt !important;
   margin: 15pt 0 !important;
@@ -203,4 +211,121 @@ body {
   background-color: #f3f4f6;
   color: black;
   font-family: sans-serif;
+}
+
+.tiptap-page {
+
+  background-color: #ffffff !important;
+  color: black !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  margin-bottom: 40px !important;
+  padding: 2cm !important;
+  min-height: 29.7cm !important;
+  box-sizing: border-box !important;
+}
+
+/* PRINT CONFIGURATION */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #printableArea,
+  #printableArea * {
+    visibility: visible !important;
+  }
+
+  body,
+  html,
+  #__next,
+  main {
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  [data-theme="light"] {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .tiptap-page-container {
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #printableArea {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .flex-1 {
+    overflow: visible !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .tiptap-page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+
+  #printableArea .rm-with-pagination {
+    box-shadow: none !important;
+    border: none !important;
+    background: #fff !important;
+  }
+
+  #printableArea #pages .rm-pagination-gap {
+    height: 0 !important;
+    border: 0 !important;
+  }
+
+  #printableArea #pages .rm-page-break .breaker {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  #printableArea #pages .rm-page-break:last-child .breaker {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  /* Ensure black text and visible borders on print */
+  h1,
+  h2,
+  p,
+  td,
+  th,
+  .tiptap-page * {
+    color: black !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  table {
+    border: 1px solid black !important;
+  }
 }

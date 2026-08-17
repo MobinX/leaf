@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { ImagePlus } from 'tiptap-image-plus';
 import { Subscript } from '@tiptap/extension-subscript';
@@ -17,23 +17,34 @@ import { ChartExtension } from './plugins/ChartExtension';
 import { SlashCommands } from './plugins/SlashCommands';
 import { EditorToolbar } from './EditorToolbar';
 import { VerticalToolbar } from './VerticalToolbar';
+import { CollaborationExtension } from './plugins/CollaborationExtension';
+import { CollaborationCaretExtension } from './plugins/CollaborationCaretExtension';
 
 import { useEditorImages } from './hooks/useEditorImages';
 import { useEditorStorage } from './hooks/useEditorStorage';
 import { useEditorActions } from './hooks/useEditorActions';
+import { useCollaboration, CollaborationConfig } from './hooks/useCollaboration';
 
 import 'katex/dist/katex.min.css';
 
 export default function TiptapEditor({ 
   initialContent, 
-  onContentChange 
+  onContentChange,
+  collaboration,
 }: { 
   initialContent?: string, 
-  onContentChange?: (html: string) => void 
+  onContentChange?: (html: string) => void,
+  collaboration?: CollaborationConfig | null,
 }) {
-  const extensions = useMemo(() => [
+  const collab = useCollaboration(collaboration);
+  const isCollaborating = !!collab;
+
+  const extensions = useMemo(() => {
+    const base = [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
+      // Yjs brings its own undo/redo (via yUndoPlugin); disable the native history.
+      undoRedo: isCollaborating ? false : undefined,
     }),
     TextStyleKit,
     Subscript,
@@ -74,17 +85,79 @@ export default function TiptapEditor({
       marginLeft: 50,
       marginRight: 50,
     }),
-  ], []);
+    ];
+
+    if (collab) {
+      base.push(
+        CollaborationExtension.configure({
+          document: collab.ydoc,
+          field: 'default',
+        }),
+        CollaborationCaretExtension.configure({
+          provider: collab.provider,
+          user: collab.user,
+        }),
+      );
+    }
+
+    return base;
+  }, [collab, isCollaborating]);
 
   const editor = useEditor({
     immediatelyRender: false,
     editable: true,
     extensions,
-    content: initialContent || "<p></p>",
-  });
+    // When collaborating, content comes from the shared Yjs doc, so we don't
+    // seed it here — the ySyncPlugin binding renders the shared fragment.
+    content: isCollaborating ? undefined : initialContent || "<p></p>",
+    // `collab` arrives via state (created in an effect), so the editor must be
+    // re-created when it changes — setOptions() alone cannot install the
+    // collaboration ProseMirror plugins into a running editor.
+  }, [collab, isCollaborating]);
+
+  // Seed the shared document with initial content only if it's empty (e.g. the
+  // very first collaborator opening a brand-new room). Waits until the initial
+  // Yjs sync has finished AND the ProseMirror view has mounted (so plugin views
+  // exist) to avoid clobbering content another collaborator already published.
+  useEffect(() => {
+    if (!isCollaborating || !collab || !initialContent || !editor) return;
+
+    let cancelled = false;
+    const fragment = collab.ydoc.getXmlFragment('default');
+
+    const seedIfEmpty = () => {
+      if (cancelled) return;
+      if (fragment.length === 0) {
+        editor.commands.setContent(initialContent);
+      }
+    };
+    // Defer to the next frame so the ProseMirror view (and its plugin views)
+    // are attached before we dispatch a transaction.
+    const seedAfterRender = () => requestAnimationFrame(seedIfEmpty);
+
+    if (collab.provider.synced) {
+      const raf = seedAfterRender();
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(raf);
+      };
+    }
+
+    const onSync = (synced: boolean) => {
+      if (synced) {
+        collab.provider.off('sync', onSync);
+        seedAfterRender();
+      }
+    };
+    collab.provider.on('sync', onSync);
+    return () => {
+      cancelled = true;
+      collab.provider.off('sync', onSync);
+    };
+  }, [isCollaborating, collab, initialContent, editor]);
 
   const { savedImages, addStoredImage, clearStoredImages } = useEditorImages();
-  useEditorStorage(editor, initialContent, onContentChange);
+  useEditorStorage(editor, isCollaborating ? undefined : initialContent, onContentChange);
   const {
     showHtmlView,
     htmlOutput,
@@ -200,7 +273,7 @@ export default function TiptapEditor({
       />
       <VerticalToolbar editor={editor} />
 
-      <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 pt-28 flex flex-col items-center tiptap-page-container">
+      <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 pt-28 md:pt-20 flex flex-col items-center tiptap-page-container">
         <div className="w-full max-w-[21cm]">
           {showHtmlView ? (
             <textarea

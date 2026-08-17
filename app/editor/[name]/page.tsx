@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useDocumentState } from '@/app/editor/hooks/useDocumentState';
 import TabBar from '@/components/editor/TabBar';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 const TiptapEditor = dynamic(() => import('@/components/editor/TiptapEditor'), {
   ssr: false,
@@ -15,10 +15,44 @@ const TiptapEditor = dynamic(() => import('@/components/editor/TiptapEditor'), {
   ),
 });
 
+const SERVER_URL = process.env.NEXT_PUBLIC_YJS_SERVER || 'wss://obscure-zebra-qp64x595ggjc677x-1234.app.github.dev';
+
+const COLLAB_COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990'];
+
+/**
+ * Returns a stable per-browser collaborator identity (persisted in localStorage)
+ * so the same user keeps their name/color across reloads.
+ */
+function getCollaborator() {
+  if (typeof window === 'undefined') {
+    return { name: 'Guest', color: COLLAB_COLORS[0] };
+  }
+  try {
+    const stored = localStorage.getItem('leaf-collab-user');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed?.name && parsed?.color) return parsed;
+    }
+  } catch {
+    // fall through to generation
+  }
+  const user = {
+    name: `User-${Math.floor(Math.random() * 10000)}`,
+    color: COLLAB_COLORS[Math.floor(Math.random() * COLLAB_COLORS.length)],
+  };
+  try {
+    localStorage.setItem('leaf-collab-user', JSON.stringify(user));
+  } catch {
+    // storage may be unavailable; fine to ignore
+  }
+  return user;
+}
+
 export default function DynamicEditorPage() {
   const params = useParams();
   const documentName = decodeURIComponent(params.name as string);
   const { isLoading, document, updateDocument, updateTabContent } = useDocumentState(documentName);
+  const collaborator = useMemo(() => getCollaborator(), []);
 
   const handleTabChange = useCallback((tabId: string) => {
     updateDocument({ activeTabId: tabId });
@@ -82,6 +116,15 @@ export default function DynamicEditorPage() {
           <TiptapEditor 
             initialContent={tab.content}
             onContentChange={(content) => handleContentChange(tab.id, content)}
+            collaboration={{
+              serverUrl: SERVER_URL,
+              // The room is derived from the document name + tab NAME (which is
+              // the same across browsers), so two people editing the same
+              // document/tab sync with each other.
+              room: `${documentName}/${tab.name}`,
+              userName: collaborator.name,
+              userColor: collaborator.color,
+            }}
           />
         </div>
       ))}

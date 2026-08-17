@@ -115,6 +115,37 @@
   --foreground: var(--fg-editor-page);
 }
 
+/* Yjs collaboration carets */
+.collab-caret {
+  position: relative;
+  border-left: 1px solid;
+  border-right: 1px solid;
+  margin-left: -1px;
+  margin-right: -1px;
+  word-break: normal;
+  pointer-events: none;
+}
+
+.collab-caret-label {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  color: #fff;
+  border-radius: 3px 3px 3px 0;
+  padding: 0.1rem 0.3rem;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.collab-selection {
+  border-radius: 2px;
+}
+
 /* AGGRESSIVE EDITOR STYLING */
 .tiptap-page-container {
   background-color: var(--bg-editor-canvas) !important;

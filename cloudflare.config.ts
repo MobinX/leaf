@@ -27,6 +27,13 @@ export default defineConfig({
       // Create with `cf d1 create --name leaf-db`, then
       // `cf d1 migrations apply leaf-db`.
       DB: bindings.d1({ name: "leaf-db" }),
+      // Plaintext vars (per owner request: plain, not secret). Values come
+      // from the local `.env` at deploy time and are never committed.
+      CLOUDFLARE_ACCOUNT_ID: bindings.text(process.env.CLOUDFLARE_ACCOUNT_ID ?? ""),
+      CLOUDFLARE_API_TOKEN: bindings.text(process.env.CLOUDFLARE_API_TOKEN ?? ""),
+      R2_ACCESS_KEY_ID: bindings.text(process.env.R2_ACCESS_KEY_ID ?? ""),
+      R2_SECRET_ACCESS_KEY: bindings.text(process.env.R2_SECRET_ACCESS_KEY ?? ""),
+      R2_S3_ENDPOINT: bindings.text(process.env.R2_S3_ENDPOINT ?? ""),
     },
   }),
 });

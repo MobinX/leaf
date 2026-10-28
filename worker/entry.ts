@@ -16,6 +16,11 @@ export interface CollabBindings {
   DB: D1Database;
   FIREBASE_PROJECT_ID?: string;
   REQUIRE_AUTH?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_API_TOKEN?: string;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
+  R2_S3_ENDPOINT?: string;
 }
 
 export type CollabEnv = {

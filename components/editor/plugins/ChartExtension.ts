@@ -414,7 +414,7 @@ class ChartNodeView implements NodeView {
             const labelInput = dsInfo.querySelector('.ds-label') as HTMLInputElement;
             labelInput.oninput = () => ds.label = labelInput.value;
             
-            const modelSelect = dsInfo.querySelector('.ds-model') as HTMLSelectElement;
+            const modelSelect = dsInfo.querySelector('.ds-model') as unknown as HTMLSelectElement;
             modelSelect.onchange = () => ds.model = modelSelect.value as ChartModel;
 
             dsHeader.appendChild(dsInfo);

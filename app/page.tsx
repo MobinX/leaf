@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Folder } from 'lucide-react';
 import type { DocumentMetadata } from '@/lib/types';
 import { DocumentStorage } from '@/lib/documentStorage';
+import AuthButton from '@/components/team/AuthButton';
+import InboxBell from '@/components/team/InboxBell';
 
 export default function Home() {
   const router = useRouter();
@@ -92,13 +94,17 @@ export default function Home() {
               <h1 className="text-3xl font-bold text-gray-900">Leaf Documents</h1>
               <p className="text-gray-600 mt-1">Create and manage your AI-powered documents</p>
             </div>
-            <button
-              onClick={() => setShowNewDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-            >
-              <Plus size={20} />
-              New Document
-            </button>
+            <div className="flex items-center gap-2">
+              <AuthButton />
+              <InboxBell />
+              <button
+                onClick={() => setShowNewDialog(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+              >
+                <Plus size={20} />
+                New Document
+              </button>
+            </div>
           </div>
         </div>
       </div>

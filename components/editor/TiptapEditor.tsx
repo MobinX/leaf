@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { ImagePlus } from 'tiptap-image-plus';
 import { Subscript } from '@tiptap/extension-subscript';
@@ -24,20 +24,52 @@ import { useEditorImages } from './hooks/useEditorImages';
 import { useEditorStorage } from './hooks/useEditorStorage';
 import { useEditorActions } from './hooks/useEditorActions';
 import { useCollaboration, CollaborationConfig } from './hooks/useCollaboration';
+import { useD1DocumentSync, D1SyncTarget, DocSyncState } from './hooks/useD1DocumentSync';
 
 import 'katex/dist/katex.min.css';
 
-export default function TiptapEditor({ 
-  initialContent, 
+export default function TiptapEditor({
+  initialContent,
   onContentChange,
   collaboration,
-}: { 
-  initialContent?: string, 
+  d1Sync,
+  readOnly,
+  onSyncChange,
+  saveRequestId,
+}: {
+  initialContent?: string,
   onContentChange?: (html: string) => void,
   collaboration?: CollaborationConfig | null,
+  d1Sync?: D1SyncTarget | null,
+  readOnly?: boolean,
+  onSyncChange?: (state: DocSyncState) => void,
+  saveRequestId?: number,
 }) {
   const collab = useCollaboration(collaboration);
   const isCollaborating = !!collab;
+  const { syncState, saveNow } = useD1DocumentSync(
+    collab,
+    !readOnly && isCollaborating ? (d1Sync ?? null) : null,
+  );
+
+  // Report save status upward (deduplicated so the parent never loops).
+  const lastReported = useRef<string>("");
+  useEffect(() => {
+    const key = `${syncState.status}|${syncState.lastSavedAt ?? ""}`;
+    if (lastReported.current !== key) {
+      lastReported.current = key;
+      onSyncChange?.(syncState);
+    }
+  }, [syncState, onSyncChange]);
+
+  // Manual Save button in the page header increments `saveRequestId`.
+  const lastSaveRequest = useRef(saveRequestId);
+  useEffect(() => {
+    if (saveRequestId !== undefined && saveRequestId !== lastSaveRequest.current) {
+      lastSaveRequest.current = saveRequestId;
+      saveNow();
+    }
+  }, [saveRequestId, saveNow]);
 
   const extensions = useMemo(() => {
     const base = [
@@ -105,7 +137,7 @@ export default function TiptapEditor({
 
   const editor = useEditor({
     immediatelyRender: false,
-    editable: true,
+    editable: !readOnly,
     extensions,
     // When collaborating, content comes from the shared Yjs doc, so we don't
     // seed it here — the ySyncPlugin binding renders the shared fragment.
@@ -259,19 +291,21 @@ export default function TiptapEditor({
         }
       `}} />
 
-      <EditorToolbar 
-        editor={editor}
-        savedImages={savedImages}
-        showHtmlView={showHtmlView}
-        htmlDirty={htmlDirty}
-        onInsertImageFromUrl={insertImageFromUrl}
-        onInsertStoredImage={insertStoredImage}
-        onClearStoredImages={clearStoredImages}
-        onUploadImage={onUploadImage}
-        onToggleHtmlView={handleToggleHtmlView}
-        onPrint={handlePrintClick}
-      />
-      <VerticalToolbar editor={editor} />
+      {!readOnly && (
+        <EditorToolbar
+          editor={editor}
+          savedImages={savedImages}
+          showHtmlView={showHtmlView}
+          htmlDirty={htmlDirty}
+          onInsertImageFromUrl={insertImageFromUrl}
+          onInsertStoredImage={insertStoredImage}
+          onClearStoredImages={clearStoredImages}
+          onUploadImage={onUploadImage}
+          onToggleHtmlView={handleToggleHtmlView}
+          onPrint={handlePrintClick}
+        />
+      )}
+      {!readOnly && <VerticalToolbar editor={editor} />}
 
       <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 pt-28 md:pt-20 flex flex-col items-center tiptap-page-container">
         <div className="w-full max-w-[21cm]">

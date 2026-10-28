@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "yjs-server": "node scripts/yjs-server.mjs"
+    "test": "bun test",
+    "dev:vinext": "vite dev --port 3001",
+    "build:vinext": "vite build",
+    "start:vinext": "vite preview",
+    "deploy:vinext": "vinext-cloudflare deploy"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",
@@ -42,12 +46,16 @@
     "@tiptap/starter-kit": "^3.22.4",
     "@tiptap/suggestion": "^3.22.5",
     "@types/chart.js": "^4.0.1",
+    "@vinext/cloudflare": "^1.2.1",
     "ai": "^6.0.168",
     "ai-gateway-provider": "^3.1.3",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
+    "firebase": "^13.1.0",
     "fuse.js": "^7.3.0",
+    "hono": "^4.13.14",
     "install": "^0.13.0",
+    "jose": "^6.2.13",
     "jspdf": "^4.2.1",
     "katex": "^0.16.45",
     "lucide-react": "^1.9.0",
@@ -55,9 +63,10 @@
     "ml-levenberg-marquardt": "^5.0.1",
     "modern-screenshot": "^4.7.0",
     "next": "16.2.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-mathlive": "^3.0.5-preview.1",
+    "react-server-dom-webpack": "^19.3.1",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.5.0",
     "tippy.js": "^6.3.7",
@@ -65,22 +74,29 @@
     "tiptap-pagination-plus": "^3.0.6",
     "tiptap-table-plus": "^3.1.0",
     "turndown": "^7.2.4",
+    "vinext": "^1.3.1",
+    "y-durableobjects": "^1.0.5",
     "y-prosemirror": "^1.3.7",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.27",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.v.6",
     "@tailwindcss/postcss": "^4",
     "@types/katex": "^0.16.8",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/turndown": "^5.0.6",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitejs/plugin-rsc": "^0.5.38",
+    "cf": "^1.0.0-beta.24",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "8.3.0"
   },
   "ignoreScripts": [
     "sharp",
@@ -89,5 +105,6 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "type": "module"
 }

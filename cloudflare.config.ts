@@ -2,7 +2,7 @@ import { bindings, defineConfig, defineWorker, exports } from "cf/config";
 
 export default defineConfig({
   worker: defineWorker({
-    name: "my-app",
+    name: "leafy",
     entrypoint: "./worker/entry.ts",
     compatibilityDate: "2026-10-28",
     compatibilityFlags: ["nodejs_compat"],

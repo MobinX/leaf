@@ -2,6 +2,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 [![Deploy to Cloudflare](https://github.com/MobinX/leaf/actions/workflows/deploy.yml/badge.svg)](https://github.com/MobinX/leaf/actions/workflows/deploy.yml)
 
+Live app: [leafy.mobin-devx.workers.dev](https://leafy.mobin-devx.workers.dev)
+
 ## Getting Started
 
 

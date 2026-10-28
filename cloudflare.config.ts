@@ -20,7 +20,7 @@ export default defineConfig({
       // Self-binding: the `YjsRoom` class is exported by this same Worker
       // (see `worker/entry.ts`), so the worker name refers to itself.
       YJS_ROOMS: bindings.durableObject({
-        worker: "my-app",
+        worker: "leafy",
         exportName: "YjsRoom",
       }),
       // D1 database for users, projects, memberships, and invitations.

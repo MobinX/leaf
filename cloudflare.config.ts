@@ -34,6 +34,10 @@ export default defineConfig({
       R2_ACCESS_KEY_ID: bindings.text(process.env.R2_ACCESS_KEY_ID ?? ""),
       R2_SECRET_ACCESS_KEY: bindings.text(process.env.R2_SECRET_ACCESS_KEY ?? ""),
       R2_S3_ENDPOINT: bindings.text(process.env.R2_S3_ENDPOINT ?? ""),
+      // Firebase: project id locks invite/doc APIs to this Firebase project
+      // (strict ID-token audience check). The NEXT_PUBLIC_* login keys ship
+      // inside the app bundle at build time instead.
+      FIREBASE_PROJECT_ID: bindings.text(process.env.FIREBASE_PROJECT_ID ?? ""),
     },
   }),
 });

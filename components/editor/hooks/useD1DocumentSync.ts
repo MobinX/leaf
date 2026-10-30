@@ -105,6 +105,9 @@ export function useD1DocumentSync(
 
   useEffect(() => {
     if (!collab || !targetProjectId || !targetTabName) return;
+    // Reset: StrictMode runs setup → cleanup → setup on the same instance,
+    // and cleanup marks us disposed — without this, saves stay dead.
+    disposedRef.current = false;
     const { ydoc } = collab;
     disposedRef.current = false;
     // Opening a document auto-saves it: mark dirty so the normal debounced

@@ -196,6 +196,51 @@ Notable behaviors:
 - Print is handled via an inline `<style>` block in `TiptapEditor` (the `@media print` rules in
   `globals.css` are **commented out**) — visibility toggling around `#printableArea` + `window.print()`.
 
+### 4.4 Page geometry & export pipeline
+
+The sheet a document is laid out on is a **document-level property** (`Document.pageSettings`),
+stored in millimetres so the preview, the printed sheet and every exported file describe the same
+page. `lib/pageSize.ts` owns the model: presets (A4, A3, A5, B4, B5, Letter, Legal, Tabloid),
+custom sizes, orientation and margins, plus the conversion to the pixel values
+`tiptap-pagination-plus` expects.
+
+The on-screen dividers produced by the pagination plugin are **virtual**: the plugin derives its
+page count from `contentHeight / pageHeight`, so the gaps sit at fixed intervals and never respect
+a content boundary. Real breaks are computed at export time by **Paged.js**, a CSS paged-media
+implementation.
+
+```mermaid
+flowchart LR
+    ED[Editor HTML] --> PR[prepare.ts<br/>math → placeholders<br/>charts → PNG<br/>block tagging]
+    PR --> PG[paginate.ts<br/>Paged.js → real pages]
+    PG --> MAP[pageMap.ts<br/>which block is on which page]
+    PG --> PDF[pdf.ts<br/>rasterised pages → jsPDF]
+    PG --> DOCX[docx.ts<br/>section page size<br/>tables + OMML math<br/>page breaks]
+    PR --> GD[googleDocs.ts<br/>HTML import + clipboard]
+    ED --> PRINT[print.ts<br/>paginated DOM → window.print]
+```
+
+| File | Responsibility |
+|---|---|
+| `lib/pageSize.ts` | Sheet model, presets, unit conversion, plugin mapping |
+| `lib/export/prepare.ts` | Editor HTML → prepared DOM with tagged blocks |
+| `lib/export/math.ts` | LaTeX → MathML → OMML (KaTeX + `mathml2omml`) |
+| `lib/export/paginate.ts` | Paged.js layout, page breakdown |
+| `lib/export/pageMap.ts` | Which blocks start which page |
+| `lib/export/pdf.ts` | Rasterised pages → PDF at the exact sheet size |
+| `lib/export/docx.ts` | Word export: section size, tables, native equations |
+| `lib/export/googleDocs.ts` | HTML import file + rich clipboard |
+| `lib/export/print.ts` | Paginated browser print (vector text) |
+
+Notes:
+
+- Equations become **native OMML** in the .docx (editable Word equations, which Google Docs
+  converts into its own equation objects on import) and **KaTeX HTML** in the PDF.
+- `next.config.ts` / `vite.config.ts` alias `pagedjs` to its prebuilt browser bundle: the package's
+  ESM sources contain a circular dependency that breaks when bundled module-by-module.
+- `bun tests/export.e2e.ts` drives the real app with Playwright and asserts that a document
+  filling two A4 pages exports as exactly two A4 pages in every format.
+
 ---
 
 ## 5. Editor Plugin Architecture (ProseMirror)

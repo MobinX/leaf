@@ -1,13 +1,17 @@
 import { useState, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
+import { DEFAULT_PAGE_SETTINGS, type PageSettings } from '@/lib/pageSize';
+import { printWithPagination } from '@/lib/export/print';
 
 export function useEditorActions(
   editor: Editor | null,
-  addStoredImage: (src: string) => void
+  addStoredImage: (src: string) => void,
+  pageSettings?: PageSettings
 ) {
   const [showHtmlView, setShowHtmlView] = useState(false);
   const [htmlOutput, setHtmlOutput] = useState('');
   const [htmlDirty, setHtmlDirty] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const insertImageFromUrl = useCallback((url: string) => {
     const src = url.trim();
@@ -47,18 +51,44 @@ export function useEditorActions(
     setShowHtmlView(false);
   }, [editor, showHtmlView, htmlDirty, htmlOutput]);
 
+  /**
+   * Prints the document.
+   *
+   * The document is laid out with real page breaks first, so the printed
+   * sheet matches the exported files instead of the editor's virtual
+   * dividers.
+   */
   const handlePrintClick = useCallback(() => {
-    if (showHtmlView) {
-      if (htmlDirty) {
-        editor?.commands.setContent(htmlOutput);
-        setHtmlDirty(false);
+    const run = async () => {
+      if (showHtmlView) {
+        if (htmlDirty) {
+          editor?.commands.setContent(htmlOutput);
+          setHtmlDirty(false);
+        }
+        setShowHtmlView(false);
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
       }
-      setShowHtmlView(false);
-      requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
-      return;
-    }
-    window.print();
-  }, [editor, showHtmlView, htmlDirty, htmlOutput]);
+
+      if (!editor) {
+        window.print();
+        return;
+      }
+
+      setIsPrinting(true);
+      try {
+        await printWithPagination({
+          editor,
+          pageSettings: pageSettings ?? DEFAULT_PAGE_SETTINGS,
+        });
+      } finally {
+        setIsPrinting(false);
+      }
+    };
+
+    void run();
+  }, [editor, showHtmlView, htmlDirty, htmlOutput, pageSettings]);
 
   return {
     showHtmlView,
@@ -66,6 +96,7 @@ export function useEditorActions(
     setHtmlOutput,
     htmlDirty,
     setHtmlDirty,
+    isPrinting,
     insertImageFromUrl,
     insertStoredImage,
     onUploadImage,

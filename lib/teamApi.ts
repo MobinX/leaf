@@ -39,8 +39,43 @@ export function getDevEmail(): string {
 
 export function setDevEmail(email: string) {
   if (typeof window === "undefined") return;
-  if (email.trim()) window.localStorage.setItem(DEV_EMAIL_KEY, email.trim().toLowerCase());
-  else window.localStorage.removeItem(DEV_EMAIL_KEY);
+  if (email.trim()) {
+    window.localStorage.setItem(DEV_EMAIL_KEY, email.trim().toLowerCase());
+    // Mirror it into a cookie so server-rendered pages can identify the dev
+    // user too (the API accepts it as a fallback identity).
+    document.cookie = `leaf_dev_email=${encodeURIComponent(email.trim().toLowerCase())}; Path=/; SameSite=Lax; Max-Age=${60 * 60 * 24 * 30}`;
+  } else {
+    window.localStorage.removeItem(DEV_EMAIL_KEY);
+    document.cookie = "leaf_dev_email=; Path=/; SameSite=Lax; Max-Age=0";
+  }
+}
+
+/**
+ * Exchange the current Firebase ID token for an HttpOnly session cookie.
+ * The cookie lets the server render authenticated pages immediately, without
+ * waiting for the browser's Firebase SDK to boot. Failures are non-fatal —
+ * the app keeps working with bearer tokens only.
+ */
+export async function startSession(idToken: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Drop the session cookie on sign-out. */
+export async function endSession(): Promise<void> {
+  try {
+    await fetch("/api/session/clear", { method: "POST" });
+  } catch {
+    // Best effort.
+  }
 }
 
 async function authHeaders(user: AuthUser | null): Promise<HeadersInit> {

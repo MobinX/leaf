@@ -4,20 +4,24 @@ import * as Y from "yjs";
 export async function compressUpdate(update: Uint8Array): Promise<Uint8Array> {
   const stream = new CompressionStream("gzip");
   const writer = stream.writable.getWriter();
-  await writer.write(update as unknown as ArrayBuffer);
+  // Attach the reader BEFORE writing: with no reader attached, backpressure
+  // can leave write()/close() pending forever and the save hangs at Saving…
+  const result = new Response(stream.readable).arrayBuffer();
+  // .slice() guarantees plain ArrayBuffer backing for the writer's types.
+  await writer.write(update.slice());
   await writer.close();
-  const buffer = await new Response(stream.readable).arrayBuffer();
-  return new Uint8Array(buffer);
+  return new Uint8Array(await result);
 }
 
 /** Gunzip bytes loaded from D1 back into a Yjs update. */
 export async function decompressUpdate(data: Uint8Array): Promise<Uint8Array> {
   const stream = new DecompressionStream("gzip");
   const writer = stream.writable.getWriter();
-  await writer.write(data as unknown as ArrayBuffer);
+  // Reader first — see compressUpdate.
+  const result = new Response(stream.readable).arrayBuffer();
+  await writer.write(data.slice());
   await writer.close();
-  const buffer = await new Response(stream.readable).arrayBuffer();
-  return new Uint8Array(buffer);
+  return new Uint8Array(await result);
 }
 
 const B64_CHUNK = 0x8000;

@@ -175,8 +175,8 @@
 
 /* 1. Force Headings */
 .ProseMirror h1,
-.tiptap-page h1,
-h1 {
+.tiptap h1,
+.rm-with-pagination h1 {
   display: block !important;
   font-size: 32pt !important;
   font-weight: 800 !important;
@@ -188,8 +188,8 @@ h1 {
 }
 
 .ProseMirror h2,
-.tiptap-page h2,
-h2 {
+.tiptap h2,
+.rm-with-pagination h2 {
   display: block !important;
   font-size: 24pt !important;
   font-weight: 700 !important;
@@ -200,8 +200,8 @@ h2 {
 
 /* 2. Force Tables */
 .ProseMirror table,
-.tiptap-page table,
-table {
+.tiptap table,
+.rm-with-pagination table {
   border-collapse: collapse !important;
   table-layout: fixed !important;
   overflow: hidden !important;
@@ -233,10 +233,10 @@ table {
 
 .ProseMirror td,
 .ProseMirror th,
-.tiptap-page td,
-.tiptap-page th,
-td,
-th {
+.tiptap td,
+.tiptap th,
+.rm-with-pagination td,
+.rm-with-pagination th {
   border: 1px solid var(--border-table) !important;
   padding: 10px !important;
   min-width: 1em !important;
@@ -275,14 +275,16 @@ th {
 }
 
 .ProseMirror th,
-th {
+.tiptap th,
+.rm-with-pagination th {
   background-color: var(--bg-table-header) !important;
   font-weight: bold !important;
 }
 
 /* 3. Force Lists */
 .ProseMirror ul,
-ul {
+.tiptap ul,
+.rm-with-pagination ul {
   list-style-type: disc !important;
   padding-left: 30pt !important;
   margin: 10pt 0 !important;
@@ -290,7 +292,8 @@ ul {
 }
 
 .ProseMirror ol,
-ol {
+.tiptap ol,
+.rm-with-pagination ol {
   list-style-type: decimal !important;
   padding-left: 30pt !important;
   margin: 10pt 0 !important;
@@ -298,14 +301,16 @@ ol {
 }
 
 .ProseMirror li,
-li {
+.tiptap li,
+.rm-with-pagination li {
   display: list-item !important;
   color: var(--fg-editor-page) !important;
 }
 
 /* 4. Force Blockquote */
 .ProseMirror blockquote,
-blockquote {
+.tiptap blockquote,
+.rm-with-pagination blockquote {
   border-left: 5px solid var(--fg-editor-page) !important;
   padding-left: 15pt !important;
   margin: 15pt 0 !important;
@@ -349,6 +354,30 @@ body {
   padding: 2cm !important;
   min-height: 29.7cm !important;
   box-sizing: border-box !important;
+}
+
+/* Mobile: the paginated page is A4 (21cm ≈ 794px) wide, which is wider than a
+   phone viewport — the document used to run off the right edge and was
+   clipped. Collapse the page to the viewport width and drop the print
+   margins so the text stays readable on a phone. */
+@media (max-width: 767px) {
+  .rm-with-pagination {
+    --rm-page-width: 100% !important;
+    --rm-margin-left: 10px !important;
+    --rm-margin-right: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #printableArea .rm-page-break .breaker {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .tiptap {
+    margin-bottom: 16px !important;
+  }
 }
 
 /* Tippy background fix */

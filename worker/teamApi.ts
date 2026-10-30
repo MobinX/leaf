@@ -1,11 +1,18 @@
 import { Hono } from "hono";
-import { resolveIdentity } from "./firebaseAuth";
+import {
+  createSessionCookie,
+  resolveIdentity,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE_SECONDS,
+} from "./firebaseAuth";
 
 export type TeamEnv = {
   Bindings: {
     DB: D1Database;
     FIREBASE_PROJECT_ID?: string;
     REQUIRE_AUTH?: string;
+    FIREBASE_CLIENT_EMAIL?: string;
+    FIREBASE_PRIVATE_KEY?: string;
   };
 };
 
@@ -103,6 +110,163 @@ function unauthorized(c: { json: (body: unknown, status: number) => Response }) 
 
 export function teamRoutes() {
   const api = new Hono<TeamEnv>();
+
+  /* ---------------------------------------------------------------- */
+  /*  Session cookie — lets the server render authenticated pages      */
+  /* ---------------------------------------------------------------- */
+
+  // Exchange a Firebase ID token for a long-lived session cookie.
+  // The cookie is HttpOnly, so it cannot be read by scripts; the server
+  // verifies it on every request (see `resolveIdentity`).
+  api.post("/api/session", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const idToken =
+      typeof body.idToken === "string" ? body.idToken.trim() : "";
+    if (!idToken) return c.json({ error: "idToken is required." }, 400);
+    try {
+      const session = await createSessionCookie(idToken, c.env);
+      if (!session) {
+        return c.json(
+          { error: "Session cookies are not configured on this deployment." },
+          501,
+        );
+      }
+      const secure = new URL(c.req.url).protocol === "https:";
+      c.header(
+        "Set-Cookie",
+        `${SESSION_COOKIE}=${encodeURIComponent(session)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_SECONDS}${secure ? "; Secure" : ""}`,
+      );
+      return c.json({ ok: true });
+    } catch (err) {
+      return c.json(
+        { error: err instanceof Error ? err.message : "Could not create a session." },
+        502,
+      );
+    }
+  });
+
+  // Drop the session cookie (sign-out).
+  api.post("/api/session/clear", (c) => {
+    const secure = new URL(c.req.url).protocol === "https:";
+    c.header(
+      "Set-Cookie",
+      `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure ? "; Secure" : ""}`,
+    );
+    return c.json({ ok: true });
+  });
+
+  // Who am I? Lets the client confirm the session cookie works.
+  api.get("/api/session", async (c) => {
+    const identity = await resolveIdentity(c.req.raw, c.env);
+    if (!identity) return unauthorized(c);
+    return c.json({
+      user: { uid: identity.uid, email: identity.email, name: identity.name },
+    });
+  });
+
+  // Every document the caller can open: owned projects plus projects they
+  // were added to. Includes the saved tab list so the client can render the
+  // whole home page from one response.
+  api.get("/api/documents", async (c) => {
+    const identity = await resolveIdentity(c.req.raw, c.env);
+    if (!identity) return unauthorized(c);
+    const db = c.env.DB;
+    if (!db) return c.json({ error: "D1 database is not bound." }, 500);
+    await ensureSchema(db);
+    const email = identity.email;
+    const projects = await db
+      .prepare(
+        `SELECT p.id AS id, p.title AS title, p.created_at AS created_at,
+                p.updated_at AS updated_at, p.owner_email AS owner_email,
+                pm.role AS member_role,
+                (SELECT MAX(dm.updated_at) FROM doc_meta dm WHERE dm.project_id = p.id) AS content_updated_at
+           FROM projects p
+           LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.email = ?
+          WHERE p.owner_email = ? OR pm.email IS NOT NULL
+          ORDER BY COALESCE((SELECT MAX(dm2.updated_at) FROM doc_meta dm2 WHERE dm2.project_id = p.id), p.updated_at) DESC`,
+      )
+      .bind(email, email)
+      .all<{
+        id: string;
+        title: string;
+        created_at: string;
+        updated_at: string;
+        owner_email: string;
+        member_role: string | null;
+        content_updated_at: string | null;
+      }>();
+
+    const list = projects.results ?? [];
+    const tabsByProject: Record<string, { name: string; title: string; updatedAt: string; updatedBy: string | null }[]> = {};
+    if (list.length > 0) {
+      const placeholders = list.map(() => "?").join(",");
+      const tabs = await db
+        .prepare(
+          `SELECT project_id, tab_name, title, updated_at, updated_by
+             FROM doc_meta
+            WHERE project_id IN (${placeholders})
+            ORDER BY tab_name ASC`,
+        )
+        .bind(...list.map((p) => p.id))
+        .all<{
+          project_id: string;
+          tab_name: string;
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+        }>();
+      for (const row of tabs.results ?? []) {
+        const bucket = (tabsByProject[row.project_id] ??= []);
+        bucket.push({
+          name: row.tab_name,
+          title: row.title,
+          updatedAt: row.updated_at,
+          updatedBy: row.updated_by,
+        });
+      }
+    }
+
+    return c.json({
+      documents: list.map((p) => ({
+        id: p.id,
+        title: p.title,
+        createdAt: p.created_at,
+        updatedAt: p.content_updated_at ?? p.updated_at,
+        role:
+          p.owner_email.toLowerCase() === email.toLowerCase()
+            ? "owner"
+            : (p.member_role ?? "editor"),
+        tabs: tabsByProject[p.id] ?? [],
+      })),
+    });
+  });
+
+  // Delete a document (owner only). Cascades to members, tabs and snapshots.
+  api.delete("/api/projects/:id", async (c) => {
+    const identity = await resolveIdentity(c.req.raw, c.env);
+    if (!identity) return unauthorized(c);
+    const db = c.env.DB;
+    if (!db) return c.json({ error: "D1 database is not bound." }, 500);
+    await ensureSchema(db);
+    const projectId = c.req.param("id");
+    const project = await db
+      .prepare("SELECT id, owner_email FROM projects WHERE id = ?")
+      .bind(projectId)
+      .first<{ id: string; owner_email: string }>();
+    if (!project) return c.json({ error: "Project not found." }, 404);
+    if (project.owner_email.toLowerCase() !== identity.email.toLowerCase()) {
+      return c.json({ error: "Only the owner can delete this document." }, 403);
+    }
+    await db.batch([
+      db.prepare("DELETE FROM doc_chunks WHERE project_id = ?").bind(projectId),
+      db.prepare("DELETE FROM doc_meta WHERE project_id = ?").bind(projectId),
+      db.prepare("DELETE FROM project_members WHERE project_id = ?").bind(projectId),
+      db.prepare("DELETE FROM share_links WHERE project_id = ?").bind(projectId),
+      db.prepare("DELETE FROM invitations WHERE project_id = ?").bind(projectId),
+      db.prepare("DELETE FROM projects WHERE id = ?").bind(projectId),
+    ]);
+    return c.json({ ok: true });
+  });
 
   // Register/update the signed-in user. Called once after Firebase login.
   api.post("/api/users/upsert", async (c) => {
@@ -535,13 +699,10 @@ export function teamRoutes() {
       }
     }
 
+    // NOTE: doc_meta must be upserted BEFORE the chunks are (re)written:
+    // doc_chunks has a foreign key to doc_meta, and D1 enforces it, so
+    // inserting chunks first fails on a tab's very first save.
     const statements = [
-      db.prepare("DELETE FROM doc_chunks WHERE project_id = ? AND tab_name = ?").bind(projectId, tab),
-      ...chunks.map((chunk, i) =>
-        db
-          .prepare("INSERT INTO doc_chunks (project_id, tab_name, chunk_index, data) VALUES (?, ?, ?, ?)")
-          .bind(projectId, tab, i, chunk.slice().buffer as ArrayBuffer),
-      ),
       db
         .prepare(
           `INSERT INTO doc_meta (project_id, tab_name, title, snapshot_json, chunk_count, byte_size, updated_at, updated_by)
@@ -551,6 +712,12 @@ export function teamRoutes() {
              byte_size=excluded.byte_size, updated_at=datetime('now'), updated_by=excluded.updated_by`,
         )
         .bind(projectId, tab, title, snapshotJson, chunks.length, bytes.length, updatedBy),
+      db.prepare("DELETE FROM doc_chunks WHERE project_id = ? AND tab_name = ?").bind(projectId, tab),
+      ...chunks.map((chunk, i) =>
+        db
+          .prepare("INSERT INTO doc_chunks (project_id, tab_name, chunk_index, data) VALUES (?, ?, ?, ?)")
+          .bind(projectId, tab, i, chunk.slice().buffer as ArrayBuffer),
+      ),
     ];
     await db.batch(statements);
     return c.json({ ok: true, chunks: chunks.length, bytes: bytes.length });
@@ -647,6 +814,81 @@ export function teamRoutes() {
       .bind(projectId)
       .all();
     return c.json({ tabs: rows.results ?? [] });
+  });
+
+  // All saved tabs of a document in one response (compressed Yjs state per
+  // tab). The server-side render uses this to hand the editor its content
+  // without a client round trip.
+  api.get("/api/projects/:id/snapshot", async (c) => {
+    const identity = await resolveIdentity(c.req.raw, c.env);
+    const db = c.env.DB;
+    if (!db) return c.json({ error: "D1 database is not bound." }, 500);
+    await ensureSchema(db);
+    const projectId = c.req.param("id");
+    const share = await resolveShareAccess(db, c.req.raw);
+    if (!identity && !share) return unauthorized(c);
+    const memberAccess = identity
+      ? await requireProjectAccess(db, projectId, identity.email)
+      : null;
+    if (
+      (!memberAccess || "error" in memberAccess) &&
+      (!share || share.projectId !== projectId)
+    ) {
+      const err = memberAccess && "error" in memberAccess ? memberAccess.error : "forbidden";
+      return c.json(
+        { error: err === "not-found" ? "Project not found." : "Only document editors can load." },
+        err === "not-found" ? 404 : 403,
+      );
+    }
+    const metas = await db
+      .prepare(
+        "SELECT tab_name, title, chunk_count, byte_size, updated_at, updated_by FROM doc_meta WHERE project_id = ? ORDER BY tab_name ASC",
+      )
+      .bind(projectId)
+      .all<{
+        tab_name: string;
+        title: string;
+        chunk_count: number;
+        byte_size: number;
+        updated_at: string;
+        updated_by: string | null;
+      }>();
+    const metasList = metas.results ?? [];
+    if (metasList.length === 0) return c.json({ tabs: [] });
+
+    const chunks = await db
+      .prepare(
+        "SELECT tab_name, chunk_index, data FROM doc_chunks WHERE project_id = ? ORDER BY tab_name ASC, chunk_index ASC",
+      )
+      .bind(projectId)
+      .all<{ tab_name: string; chunk_index: number; data: ArrayBuffer }>();
+
+    const byTab = new Map<string, Uint8Array[]>();
+    for (const row of chunks.results ?? []) {
+      const list = byTab.get(row.tab_name) ?? [];
+      list.push(new Uint8Array(row.data));
+      byTab.set(row.tab_name, list);
+    }
+
+    const tabs = metasList.map((meta) => {
+      const parts = byTab.get(meta.tab_name) ?? [];
+      const joined = new Uint8Array(meta.byte_size);
+      let offset = 0;
+      for (const part of parts) {
+        joined.set(part, offset);
+        offset += part.length;
+      }
+      return {
+        name: meta.tab_name,
+        title: meta.title,
+        stateB64: bytesToB64(joined),
+        chunkCount: meta.chunk_count,
+        bytes: meta.byte_size,
+        updatedAt: meta.updated_at,
+        updatedBy: meta.updated_by,
+      };
+    });
+    return c.json({ tabs });
   });
 
   // Reject: only the invited email can reject.

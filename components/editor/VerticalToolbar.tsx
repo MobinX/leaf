@@ -50,7 +50,9 @@ export const VerticalToolbar = ({ editor }: VerticalToolbarProps) => {
   const activeHeading = headingOptions.find(level => editor.isActive('heading', { level }));
 
   return (
-    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 bg-[var(--bg-toolbar)]/95 backdrop-blur-md border border-[var(--border-toolbar)] rounded-2xl shadow-xl p-1.5 flex flex-col gap-1 w-12 items-center animate-in fade-in slide-in-from-left-4 duration-500">
+    // Desktop only: on phones this floating column sat on top of the
+    // document, so its controls live in the mobile toolbar instead.
+    <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 bg-[var(--bg-toolbar)]/95 backdrop-blur-md border border-[var(--border-toolbar)] rounded-2xl shadow-xl p-1.5 hidden md:flex flex-col gap-1 w-12 items-center animate-in fade-in slide-in-from-left-4 duration-500">
       {/* Headings Popover */}
       <Popover.Root open={showHeadings} onOpenChange={setShowHeadings}>
         <Popover.Trigger asChild>

@@ -17,6 +17,7 @@ import {
   type User,
 } from "firebase/auth";
 import { firebaseConfigured, getFirebaseAuth } from "./firebase";
+import { endSession, startSession } from "./teamApi";
 
 export interface AuthUser {
   uid: string;
@@ -86,6 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (fbUser) {
           try {
             const token = await fbUser.getIdToken();
+            // Mint an HttpOnly session cookie so server-rendered pages are
+            // authenticated on the very first request (no SDK round trip).
+            void startSession(token);
             await fetch("/api/users/upsert", {
               method: "POST",
               headers: {
@@ -124,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOutUser = useCallback(async () => {
     const auth = getFirebaseAuth();
     if (auth) await signOut(auth);
+    await endSession();
     setUser(null);
   }, []);
 

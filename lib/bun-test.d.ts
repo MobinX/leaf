@@ -10,6 +10,7 @@ declare module "bun:test" {
     toEqual(expected: unknown): void;
     toBeLessThan(expected: number): void;
     toBeGreaterThan(expected: number): void;
+    toBeCloseTo(expected: number, precision?: number): void;
     toContain(item: string): void;
     not: Matchers;
   }

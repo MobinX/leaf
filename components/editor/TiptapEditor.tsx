@@ -10,7 +10,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import { TableKit } from "@tiptap/extension-table";
 import { Placeholder } from '@tiptap/extension-placeholder';
-import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
+import { PaginationPlus } from "tiptap-pagination-plus";
 
 import { MathliveExtension } from './plugins/MathliveExtension';
 import { ChartExtension } from './plugins/ChartExtension';
@@ -19,6 +19,15 @@ import { EditorToolbar } from './EditorToolbar';
 import { VerticalToolbar } from './VerticalToolbar';
 import { CollaborationExtension } from './plugins/CollaborationExtension';
 import { CollaborationCaretExtension } from './plugins/CollaborationCaretExtension';
+
+import {
+  DEFAULT_PAGE_SETTINGS,
+  mmToPx,
+  normalizePageSettings,
+  pageSettingsToPluginConfig,
+  type PageSettings,
+} from '@/lib/pageSize';
+import { exportDocument } from '@/lib/export';
 
 import { useEditorImages } from './hooks/useEditorImages';
 import { useEditorStorage } from './hooks/useEditorStorage';
@@ -36,6 +45,9 @@ export default function TiptapEditor({
   readOnly,
   onSyncChange,
   saveRequestId,
+  pageSettings,
+  onPageSettingsChange,
+  documentName,
 }: {
   initialContent?: string,
   onContentChange?: (html: string) => void,
@@ -44,6 +56,12 @@ export default function TiptapEditor({
   readOnly?: boolean,
   onSyncChange?: (state: DocSyncState) => void,
   saveRequestId?: number,
+  /** Sheet size, orientation and margins. */
+  pageSettings?: PageSettings,
+  /** Called whenever the user changes the sheet. */
+  onPageSettingsChange?: (settings: PageSettings) => void,
+  /** Name of the document, used for the exported files. */
+  documentName?: string,
 }) {
   const collab = useCollaboration(collaboration);
   const isCollaborating = !!collab;
@@ -71,7 +89,15 @@ export default function TiptapEditor({
     }
   }, [saveRequestId, saveNow]);
 
+  // The sheet the document is laid out on. Persisted on the document, so it
+  // survives a reload and applies to every tab.
+  const settings = useMemo(
+    () => normalizePageSettings(pageSettings ?? DEFAULT_PAGE_SETTINGS),
+    [pageSettings],
+  );
+
   const extensions = useMemo(() => {
+    const pageConfig = pageSettingsToPluginConfig(settings);
     const base = [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4, 5, 6] },
@@ -89,7 +115,7 @@ export default function TiptapEditor({
         cellMinWidth: 50,
       },
     }),
-    MathliveExtension, 
+    MathliveExtension,
     ChartExtension,
     SlashCommands,
     Placeholder.configure({
@@ -101,21 +127,23 @@ export default function TiptapEditor({
       },
       showOnlyWhenEditable: true,
       includeChildren: true,
-      
+
     }),
     ImagePlus.configure({
       wrapperStyle: { cursor: 'pointer' },
       containerStyle: { padding: "25px", borderRadius: "10px" },
     }),
     PaginationPlus.configure({
-      pageHeight: PAGE_SIZES.A4.pageHeight,
-      pageWidth: PAGE_SIZES.A4.pageWidth,
+      pageHeight: pageConfig.pageHeight,
+      pageWidth: pageConfig.pageWidth,
       pageGap: 20,
       pageBreakBackground: "var(--bg-app)",
-      marginTop: 20,
-      marginBottom: 20,
-      marginLeft: 50,
-      marginRight: 50,
+      marginTop: pageConfig.marginTop,
+      marginBottom: pageConfig.marginBottom,
+      marginLeft: pageConfig.marginLeft,
+      marginRight: pageConfig.marginRight,
+      contentMarginTop: pageConfig.contentMarginTop,
+      contentMarginBottom: pageConfig.contentMarginBottom,
     }),
     ];
 
@@ -133,6 +161,10 @@ export default function TiptapEditor({
     }
 
     return base;
+    // The sheet is deliberately not a dependency: changing it must not
+    // recreate the editor. The effect below applies it to the running
+    // pagination plugin instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collab, isCollaborating]);
 
   const editor = useEditor({
@@ -188,7 +220,46 @@ export default function TiptapEditor({
     };
   }, [isCollaborating, collab, initialContent, editor]);
 
+  // Apply the sheet to the running pagination plugin.
+  //
+  // The plugin keeps its configuration in its storage and recomputes the
+  // page layout whenever the storage changes, so updating it and dispatching
+  // a transaction is enough — the editor itself never has to be recreated.
+  useEffect(() => {
+    if (!editor) return;
+
+    const config = pageSettingsToPluginConfig(settings);
+
+    editor.commands.updatePageSize({
+      pageHeight: config.pageHeight,
+      pageWidth: config.pageWidth,
+      marginTop: config.marginTop,
+      marginBottom: config.marginBottom,
+      marginLeft: config.marginLeft,
+      marginRight: config.marginRight,
+    });
+    editor.commands.updateContentMargins({
+      top: config.contentMarginTop,
+      bottom: config.contentMarginBottom,
+    });
+
+    // Nudge the plugin so it re-lays out the pages. The transaction is kept
+    // out of the undo history — resizing the sheet is not a content edit.
+    editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false));
+  }, [editor, settings]);
+
   const { savedImages, addStoredImage, clearStoredImages } = useEditorImages();
+
+  // A small development-only handle so the export pipeline can be driven from
+  // the browser console (and from the end-to-end tests).
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' || !editor) return;
+    (window as unknown as { __leaf?: unknown }).__leaf = {
+      editor,
+      pageSettings: settings,
+      exportDocument,
+    };
+  }, [editor, settings]);
   useEditorStorage(editor, isCollaborating ? undefined : initialContent, onContentChange);
   const {
     showHtmlView,
@@ -201,28 +272,23 @@ export default function TiptapEditor({
     onUploadImage,
     handleToggleHtmlView,
     handlePrintClick,
-  } = useEditorActions(editor, addStoredImage);
+  } = useEditorActions(editor, addStoredImage, settings);
 
   if (!editor) return null;
 
+  const pageWidthPx = Math.round(mmToPx(settings.widthMm));
+
   return (
-    <div className="flex flex-col h-screen bg-[var(--bg-app)] overflow-hidden " data-print="true">
+    <div className="relative flex min-h-0 flex-1 flex-col bg-[var(--bg-app)] overflow-hidden" data-print="true">
        <style dangerouslySetInnerHTML={{
         __html: `
-        .tiptap-page { 
-          background-color: rgba(255, 255, 255, 0.7) !important; 
-          backdrop-filter: blur(8px);
-          color: black !important; 
-          box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important; 
-          margin-bottom: 40px !important; 
-          padding: 2cm !important; 
-          min-height: 29.7cm !important; 
-          box-sizing: border-box !important; 
-          border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        }
-
         @media print {
-          @page { size: A4; margin: 20px 50px !important; }
+          /* The sheet is the page: the page margins are part of the content
+             box, so the printed sheet matches the exported file exactly. */
+          @page {
+            size: ${settings.widthMm}mm ${settings.heightMm}mm;
+            margin: 0 !important;
+          }
           body * { visibility: hidden !important; }
           #printableArea, #printableArea * { visibility: visible !important; }
           body, html, #__next, main {
@@ -260,11 +326,6 @@ export default function TiptapEditor({
             padding: 0 !important;
             display: block !important;
           }
-          .tiptap-page {
-            box-shadow: none !important;
-            margin: 0 !important;
-            border: none !important;
-          }
           #printableArea .rm-with-pagination {
             box-shadow: none !important;
             border: none !important;
@@ -282,7 +343,7 @@ export default function TiptapEditor({
             break-after: auto !important;
             page-break-after: auto !important;
           }
-          h1, h2, p, td, th, .tiptap-page * {
+          h1, h2, p, td, th, #printableArea * {
             color: black !important;
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
@@ -291,24 +352,34 @@ export default function TiptapEditor({
         }
       `}} />
 
+      {/* Toolbar: in the flow on mobile (a row under the page nav bar), and a
+          floating overlay on desktop — positioned against the editor canvas so
+          it never covers the page header. */}
       {!readOnly && (
-        <EditorToolbar
-          editor={editor}
-          savedImages={savedImages}
-          showHtmlView={showHtmlView}
-          htmlDirty={htmlDirty}
-          onInsertImageFromUrl={insertImageFromUrl}
-          onInsertStoredImage={insertStoredImage}
-          onClearStoredImages={clearStoredImages}
-          onUploadImage={onUploadImage}
-          onToggleHtmlView={handleToggleHtmlView}
-          onPrint={handlePrintClick}
-        />
+        <div className="relative z-30 shrink-0 md:pointer-events-none md:absolute md:inset-x-0 md:top-4 md:z-50 md:flex md:justify-center">
+          <div className="pointer-events-auto w-full md:w-[calc(100%-2rem)] md:max-w-[1200px]">
+            <EditorToolbar
+              editor={editor}
+              savedImages={savedImages}
+              showHtmlView={showHtmlView}
+              htmlDirty={htmlDirty}
+              onInsertImageFromUrl={insertImageFromUrl}
+              onInsertStoredImage={insertStoredImage}
+              onClearStoredImages={clearStoredImages}
+              onUploadImage={onUploadImage}
+              onToggleHtmlView={handleToggleHtmlView}
+              onPrint={handlePrintClick}
+              pageSettings={settings}
+              onPageSettingsChange={onPageSettingsChange}
+              documentName={documentName ?? 'document'}
+            />
+          </div>
+        </div>
       )}
       {!readOnly && <VerticalToolbar editor={editor} />}
 
-      <div id="printableArea" className="flex-1 overflow-y-auto no-scrollbar p-4 md:p-10 pt-28 md:pt-20 flex flex-col items-center tiptap-page-container">
-        <div className="w-full max-w-[21cm]">
+      <div id="printableArea" className="tiptap-page-container flex min-h-0 flex-1 flex-col items-center overflow-y-auto no-scrollbar p-3 md:p-10 md:pt-24">
+        <div className="w-full" style={{ maxWidth: `${pageWidthPx}px` }}>
           {showHtmlView ? (
             <textarea
               value={htmlOutput}

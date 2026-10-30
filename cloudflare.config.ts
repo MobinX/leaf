@@ -38,6 +38,10 @@ export default defineConfig({
       // (strict ID-token audience check). The NEXT_PUBLIC_* login keys ship
       // inside the app bundle at build time instead.
       FIREBASE_PROJECT_ID: bindings.text(process.env.FIREBASE_PROJECT_ID ?? ""),
+      // Service account used by the Admin API to mint session cookies, so
+      // server-rendered pages can authenticate without the browser SDK.
+      FIREBASE_CLIENT_EMAIL: bindings.text(process.env.FIREBASE_CLIENT_EMAIL ?? ""),
+      FIREBASE_PRIVATE_KEY: bindings.text(process.env.FIREBASE_PRIVATE_KEY ?? ""),
     },
   }),
 });

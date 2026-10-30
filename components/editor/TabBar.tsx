@@ -25,24 +25,26 @@ export default function TabBar({ tabs, activeTabId, onTabChange, onAddTab, onClo
   return (
     <>
       {/* Sleek thin handle */}
-      <div 
+      <div
         className={cn(
-          "fixed bottom-0 left-1/2 -translate-x-1/2 w-24 h-2 bg-gray-400/50 backdrop-blur-sm dark:bg-gray-600/50 rounded-t-full cursor-pointer hover:h-3 transition-all z-[60] flex items-center justify-center group no-print",
-          isOpen && "bottom-[68px]"
+          "fixed left-1/2 -translate-x-1/2 w-24 h-2 bg-gray-400/50 backdrop-blur-sm dark:bg-gray-600/50 rounded-t-full cursor-pointer hover:h-3 transition-all z-[60] flex items-center justify-center group no-print",
+          "bottom-[env(safe-area-inset-bottom)]",
+          isOpen && "bottom-[calc(4rem_+_env(safe-area-inset-bottom))]"
         )}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <ChevronUp 
-          size={12} 
+        <ChevronUp
+          size={12}
           className={cn(
             "text-[var(--fg-toolbar)] opacity-0 group-hover:opacity-100 transition-all transform",
             isOpen && "rotate-180 opacity-100"
-          )} 
+          )}
         />
       </div>
 
       <div className={cn(
-        "fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[1200px] h-12 bg-[var(--bg-toolbar)]/70 backdrop-blur-md border border-[var(--border-toolbar)] flex items-center px-4 gap-2 overflow-x-auto shadow-xl no-print z-50 rounded-2xl transition-all duration-300 ease-in-out",
+        "fixed left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] max-w-[1200px] h-12 bg-[var(--bg-toolbar)]/70 backdrop-blur-md border border-[var(--border-toolbar)] flex items-center px-3 gap-2 overflow-x-auto shadow-xl no-print z-50 rounded-2xl transition-all duration-300 ease-in-out",
+        "bottom-[max(0.75rem,env(safe-area-inset-bottom))]",
         !isOpen && "translate-y-[calc(100%+2rem)] opacity-0 pointer-events-none"
       )}>
         <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">

@@ -42,7 +42,13 @@ export function normalizeServerUrl(url: string): string {
  * Encode a room name to a single URL path segment. Document/tab names may
  * contain `/` and spaces; the encoded form keeps them routable and stable so
  * both collaborators derive the same Durable Object id.
+ *
+ * An encoded slash (`%2F`) is deliberately rewritten to `~2F`: proxies and
+ * CDNs in front of the app (e.g. the Cloudflare edge used by quick tunnels)
+ * normalise `%2F` in the request path, which breaks the WebSocket upgrade to
+ * the room. `~` is an unreserved URL character and is never rewritten, so the
+ * room stays a single path segment everywhere.
  */
 export function toRoomSegment(room: string): string {
-  return encodeURIComponent(room);
+  return encodeURIComponent(room).replace(/%2F/gi, "~2F").replace(/%5C/gi, "~5C");
 }

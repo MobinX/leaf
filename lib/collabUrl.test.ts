@@ -16,7 +16,11 @@ describe('collabUrl', () => {
     const segment = toRoomSegment('My Doc/Tab 1');
     expect(segment).not.toContain('/');
     expect(segment).not.toContain(' ');
-    expect(segment).toBe(encodeURIComponent('My Doc/Tab 1'));
+    // Proxies (and the Cloudflare edge) normalise `%2F` in a path, which breaks
+    // the WebSocket upgrade to the room, so the encoded slash is rewritten.
+    expect(segment).not.toContain('%2F');
+    expect(segment).not.toContain('%5C');
+    expect(segment).toBe('My%20Doc~2FTab%201');
     // Both collaborators derive the same segment for the same room.
     expect(toRoomSegment('My Doc/Tab 1')).toBe(segment);
   });

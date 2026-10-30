@@ -118,7 +118,7 @@ export default function SharedDocumentPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[var(--bg-app)] px-4">
+      <div className="flex items-center justify-center h-[100dvh] bg-[var(--bg-app)] px-4">
         <div className="max-w-md text-center">
           <p className="text-lg font-medium text-[var(--fg-toolbar)]">This link doesn&apos;t work</p>
           <p className="mt-2 text-sm text-[var(--fg-toolbar)] opacity-70">{error}</p>
@@ -129,7 +129,7 @@ export default function SharedDocumentPage() {
 
   if (!link || !seedsReady) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[var(--bg-app)]">
+      <div className="flex items-center justify-center h-[100dvh] bg-[var(--bg-app)]">
         <div className="text-lg font-medium text-[var(--fg-toolbar)] animate-pulse">
           Loading shared document...
         </div>
@@ -140,13 +140,14 @@ export default function SharedDocumentPage() {
   const isReader = link.permission === "reader";
 
   return (
-    <main className="min-h-screen bg-[var(--bg-app)]">
-      <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-[var(--border-toolbar)] bg-[var(--bg-toolbar)]">
-        <span className="text-sm font-medium text-[var(--fg-toolbar)] truncate" title={link.title}>
+    <main className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--bg-app)]">
+      <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-1.5 border-b border-[var(--border-toolbar)] bg-[var(--bg-toolbar)]">
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--fg-toolbar)]" title={link.title}>
           {link.title}
         </span>
-        <span className="text-xs text-[var(--fg-toolbar)] opacity-70 shrink-0">
-          Shared link · {isReader ? "read-only" : "can edit"}
+        <span className="shrink-0 text-xs text-[var(--fg-toolbar)] opacity-70">
+          <span className="hidden sm:inline">Shared link · </span>
+          {isReader ? "read-only" : "can edit"}
         </span>
       </div>
       {link.tabs.length > 1 && (
@@ -171,25 +172,27 @@ export default function SharedDocumentPage() {
           Nothing has been saved to this shared document yet.
         </p>
       )}
-      {link.tabs.map((t) => (
-        <div key={t.name} className={activeTab === t.name ? "block" : "hidden"}>
-          <TiptapEditor
-            collaboration={{
-              serverUrl: SERVER_URL,
-              room: `${link.projectId}/${t.name}`,
-              userName: identity.name,
-              userColor: identity.color,
-              seedUpdate: seeds[t.name] ?? null,
-            }}
-            d1Sync={
-              isReader
-                ? null
-                : { projectId: link.projectId, tabName: t.name, title: link.title }
-            }
-            readOnly={isReader}
-          />
-        </div>
-      ))}
+      <div className="min-h-0 flex-1">
+        {link.tabs.map((t) => (
+          <div key={t.name} className={activeTab === t.name ? "flex h-full min-h-0" : "hidden"}>
+            <TiptapEditor
+              collaboration={{
+                serverUrl: SERVER_URL,
+                room: `${link.projectId}/${t.name}`,
+                userName: identity.name,
+                userColor: identity.color,
+                seedUpdate: seeds[t.name] ?? null,
+              }}
+              d1Sync={
+                isReader
+                  ? null
+                  : { projectId: link.projectId, tabName: t.name, title: link.title }
+              }
+              readOnly={isReader}
+            />
+          </div>
+        ))}
+      </div>
     </main>
   );
 }

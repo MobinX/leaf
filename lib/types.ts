@@ -2,6 +2,8 @@
  * Document and related types for AI-powered document system
  */
 
+import type { PageSettings } from './pageSize';
+
 export type ChartModel = 'linear' | 'exponential' | 'logarithmic' | 'sine' | 'cos' | 'tan' | 'power' | 'logistic' | 'polynomial' | 'gaussian';
 
 export interface DocumentInput {
@@ -54,6 +56,9 @@ export interface Document {
   
   editorContent?: string; // final Tiptap content (JSON or HTML)
   isGenerating?: boolean;
+
+  /** Sheet size, orientation and margins. Falls back to A4 portrait. */
+  pageSettings?: PageSettings;
 }
 
 export interface DocumentMetadata {

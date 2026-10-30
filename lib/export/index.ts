@@ -78,11 +78,20 @@ export async function exportDocument(request: ExportRequest): Promise<ExportResu
     pageNumbers: true,
   });
 
+  // One break set feeds both the Word and the PDF export, so a block that
+  // starts page N in the .docx starts page N in the PDF too.
+  const pageBreakBlocks = computePageBreakBlocks(paginated.pages);
+
   try {
     switch (format) {
       case 'pdf': {
         onProgress?.('Rendering PDF…');
-        const blob = await exportToPDF({ paginated, geometry });
+        const blob = await exportToPDF({
+          body: prepared.body,
+          geometry,
+          pageBreakBlocks,
+          title: fileName,
+        });
         return {
           blob,
           fileName: `${fileName}.pdf`,
@@ -97,7 +106,7 @@ export async function exportDocument(request: ExportRequest): Promise<ExportResu
         const blob = await exportToDocx({
           body: prepared.body,
           geometry,
-          pageBreakBlocks: computePageBreakBlocks(paginated.pages),
+          pageBreakBlocks,
           title: fileName,
         });
         return {
@@ -186,7 +195,44 @@ function measureFooterBand(editor: Editor): number {
   const element = editor.view.dom.querySelector<HTMLElement>(
     '.rm-page-footer-0 .rm-page-footer-content',
   );
-  return element?.clientHeight ?? 0;
+  const live = element?.clientHeight ?? 0;
+  if (live > 0) return live;
+
+  // The fluid writing view renders no footers, so there is nothing to
+  // measure. Probe the plugin's own footer styles instead, so an export from
+  // the writing view uses the same band — and the same page breaks — as an
+  // export from print layout.
+  return measureFooterProbe(editor);
+}
+
+/**
+ * Measures the pagination footer height without paginated pages.
+ *
+ * A probe footer is attached to the live editor DOM, so it picks up the
+ * plugin's injected footer styles and the editor's CSS variables, then it is
+ * removed again. Never throws: a failed probe yields a zero band.
+ */
+function measureFooterProbe(editor: Editor): number {
+  try {
+    const footer = document.createElement('div');
+    footer.className = 'rm-page-footer rm-page-footer-0';
+    footer.setAttribute('aria-hidden', 'true');
+    footer.style.cssText = 'overflow: visible; position: relative;';
+
+    const content = document.createElement('div');
+    content.className = 'rm-page-footer-content';
+    content.style.width = '100%';
+    content.style.overflow = 'hidden';
+    content.textContent = '1';
+
+    footer.appendChild(content);
+    editor.view.dom.appendChild(footer);
+    const height = content.clientHeight;
+    footer.remove();
+    return height > 0 ? height : 0;
+  } catch {
+    return 0;
+  }
 }
 
 /**

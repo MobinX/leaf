@@ -99,6 +99,9 @@ async function main() {
     const html = await exportFormat(page, 'Google Docs', 'report.html');
     assertGoogleDocs(html);
 
+    // ------------------------------------------------- mobile pagination
+    await assertMobileMatchesDesktop(page);
+
     // ------------------------------------------------- page size switching
     await switchToA3Landscape(page);
     await assertA3Landscape(page);
@@ -193,8 +196,8 @@ async function setContent(page: Page, fillerParagraphs: number): Promise<void> {
 }
 
 /** Runs the exporter and returns the number of pages it produced. */
-async function countPages(page: Page): Promise<number> {
-  return page.evaluate(async () => {
+async function countPages(page: Page, format: 'docx' | 'pdf' = 'docx'): Promise<number> {
+  return page.evaluate(async (exportFormat) => {
     const api = (
       window as unknown as {
         __leaf: {
@@ -210,12 +213,12 @@ async function countPages(page: Page): Promise<number> {
     const result = await api.exportDocument({
       editor: api.editor,
       pageSettings: api.pageSettings,
-      format: 'docx',
+      format: exportFormat,
       fileName: 'calibration',
     });
 
     return result.totalPages;
-  });
+  }, format);
 }
 
 /**
@@ -290,6 +293,63 @@ async function exportFormat(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Mobile                                                             */
+/* ------------------------------------------------------------------ */
+
+/** Pages per the editor's own pagination plugin (its virtual dividers). */
+async function editorPageCount(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const pagination = document.querySelector('[data-rm-pagination]');
+    return pagination ? pagination.children.length : 1;
+  });
+}
+
+/**
+ * Mobile defaults to the fluid writing view (one page, no overflow); the
+ * print-layout toggle has to paginate exactly like desktop, and exporting
+ * from the writing view has to lay out the same pages.
+ */
+async function assertMobileMatchesDesktop(page: Page): Promise<void> {
+  const desktop = await editorPageCount(page);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(800);
+
+  // The default mobile view is the fluid writing page: no virtual dividers.
+  const fluid = await page.evaluate(() => !document.querySelector('[data-rm-pagination]'));
+  assert(fluid, 'Mobile should default to the fluid writing view (no page dividers).');
+
+  // Exporting from the writing view still lays out the same pages.
+  const fluidPdfPages = await countPages(page, 'pdf');
+  assert(
+    fluidPdfPages === TARGET_PAGES,
+    `Fluid-view PDF should have ${TARGET_PAGES} pages, found ${fluidPdfPages}.`,
+  );
+
+  // Print layout paginates exactly like desktop.
+  await page.click('[title="Show print layout"]');
+  await page.waitForTimeout(800);
+  const mobile = await editorPageCount(page);
+  assert(
+    mobile === desktop,
+    `Mobile print layout should paginate like desktop (${desktop} pages), found ${mobile}.`,
+  );
+
+  // Toggling back returns to the single fluid page.
+  await page.click('[title="Show print layout"]');
+  await page.waitForTimeout(500);
+  const backToFluid = await page.evaluate(
+    () => !document.querySelector('[data-rm-pagination]'),
+  );
+  assert(backToFluid, 'Toggling print layout off should return to the fluid page.');
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.waitForTimeout(500);
+
+  console.log(`  Mobile ✓ fluid writing view, ${mobile} print pages matching desktop`);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Assertions                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -323,8 +383,19 @@ function assertPdf(pdf: Buffer) {
     );
   }
 
+  // The PDF must be selectable text, not a page screenshot: the heading has
+  // to be present as text operators and the file has to use a vector font.
+  assert(
+    text.includes('Resonance') && text.includes('cantilever'),
+    'PDF should contain the heading as selectable text.',
+  );
+  assert(
+    /\/BaseFont\s*\/Helvetica/.test(text),
+    'PDF should use a vector font for its text.',
+  );
+
   console.log(
-    `  PDF  ✓ ${pageCount} pages, ${A4_WIDTH_MM}×${A4_HEIGHT_MM}mm`,
+    `  PDF  ✓ ${pageCount} pages, ${A4_WIDTH_MM}×${A4_HEIGHT_MM}mm, selectable text`,
   );
 }
 

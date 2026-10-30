@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { BookOpen } from 'lucide-react';
 import { ImagePlus } from 'tiptap-image-plus';
 import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
@@ -27,6 +28,7 @@ import {
   pageSettingsToPluginConfig,
   type PageSettings,
 } from '@/lib/pageSize';
+import { useIsMobile } from '@/lib/useMediaQuery';
 import { exportDocument } from '@/lib/export';
 
 import { useEditorImages } from './hooks/useEditorImages';
@@ -95,6 +97,13 @@ export default function TiptapEditor({
     () => normalizePageSettings(pageSettings ?? DEFAULT_PAGE_SETTINGS),
     [pageSettings],
   );
+
+  // Mobile view mode. The fluid writing view (a single page that fits the
+  // viewport) is the default so editing never overflows; print layout shows
+  // the paginated sheet exactly as it will print and export. Desktop always
+  // uses print layout.
+  const isMobile = useIsMobile();
+  const [mobilePrintLayout, setMobilePrintLayout] = useState(false);
 
   const extensions = useMemo(() => {
     const pageConfig = pageSettingsToPluginConfig(settings);
@@ -248,6 +257,20 @@ export default function TiptapEditor({
     editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false));
   }, [editor, settings]);
 
+  // Mobile view mode: switching pagination off removes the virtual page
+  // dividers and leaves a single fluid page. The sheet configuration is
+  // untouched, so returning to print layout paginates exactly as before.
+  useEffect(() => {
+    if (!editor) return;
+    if (!isMobile || mobilePrintLayout) {
+      editor.commands.enablePagination();
+    } else {
+      editor.commands.disablePagination();
+    }
+    // Kept out of the undo history — switching views is not a content edit.
+    editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false));
+  }, [editor, isMobile, mobilePrintLayout]);
+
   const { savedImages, addStoredImage, clearStoredImages } = useEditorImages();
 
   // A small development-only handle so the export pipeline can be driven from
@@ -358,7 +381,39 @@ export default function TiptapEditor({
       {!readOnly && (
         <div className="relative z-30 shrink-0 md:pointer-events-none md:absolute md:inset-x-0 md:top-4 md:z-50 md:flex md:justify-center">
           <div className="pointer-events-auto w-full md:w-[calc(100%-2rem)] md:max-w-[1200px]">
-            <EditorToolbar
+          {/* Mobile view toggle: fluid writing page by default, paginated
+              print layout on demand. Desktop always uses print layout, so
+              this stays hidden there. */}
+          {isMobile && (
+            <div className="pb-1.5 md:hidden">
+              <button
+                type="button"
+                title="Show print layout"
+                aria-label="Show print layout"
+                aria-pressed={mobilePrintLayout}
+                onClick={() => setMobilePrintLayout((value) => !value)}
+                className="flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--border-toolbar)] bg-[var(--bg-toolbar)] px-3 py-2"
+              >
+                <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-[var(--fg-toolbar)]">
+                  <BookOpen size={14} className="shrink-0" />
+                  <span className="truncate">Print layout</span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                    mobilePrintLayout ? 'bg-[var(--accent)]' : 'bg-[var(--border-toolbar)]'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
+                      mobilePrintLayout ? 'left-[18px]' : 'left-0.5'
+                    }`}
+                  />
+                </span>
+              </button>
+            </div>
+          )}
+          <EditorToolbar
               editor={editor}
               savedImages={savedImages}
               showHtmlView={showHtmlView}

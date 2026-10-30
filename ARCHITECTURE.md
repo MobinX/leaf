@@ -214,7 +214,7 @@ flowchart LR
     ED[Editor HTML] --> PR[prepare.ts<br/>math → placeholders<br/>charts → PNG<br/>block tagging]
     PR --> PG[paginate.ts<br/>Paged.js → real pages]
     PG --> MAP[pageMap.ts<br/>which block is on which page]
-    PG --> PDF[pdf.ts<br/>rasterised pages → jsPDF]
+    PG --> PDF[pdf.ts<br/>selectable text → jsPDF<br/>same breaks as DOCX]
     PG --> DOCX[docx.ts<br/>section page size<br/>tables + OMML math<br/>page breaks]
     PR --> GD[googleDocs.ts<br/>HTML import + clipboard]
     ED --> PRINT[print.ts<br/>paginated DOM → window.print]
@@ -227,7 +227,7 @@ flowchart LR
 | `lib/export/math.ts` | LaTeX → MathML → OMML (KaTeX + `mathml2omml`) |
 | `lib/export/paginate.ts` | Paged.js layout, page breakdown |
 | `lib/export/pageMap.ts` | Which blocks start which page |
-| `lib/export/pdf.ts` | Rasterised pages → PDF at the exact sheet size |
+| `lib/export/pdf.ts` | Selectable text → PDF at the exact sheet size, same page breaks as the .docx |
 | `lib/export/docx.ts` | Word export: section size, tables, native equations |
 | `lib/export/googleDocs.ts` | HTML import file + rich clipboard |
 | `lib/export/print.ts` | Paginated browser print (vector text) |
@@ -235,7 +235,8 @@ flowchart LR
 Notes:
 
 - Equations become **native OMML** in the .docx (editable Word equations, which Google Docs
-  converts into its own equation objects on import) and **KaTeX HTML** in the PDF.
+  converts into its own equation objects on import) and **PNG rasters** in the PDF (body text
+  stays selectable); Google Docs also receives equations as images.
 - `next.config.ts` / `vite.config.ts` alias `pagedjs` to its prebuilt browser bundle: the package's
   ESM sources contain a circular dependency that breaks when bundled module-by-module.
 - `bun tests/export.e2e.ts` drives the real app with Playwright and asserts that a document

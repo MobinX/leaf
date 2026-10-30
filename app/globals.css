@@ -356,23 +356,30 @@ body {
   box-sizing: border-box !important;
 }
 
-/* Mobile: the paginated page is A4 (21cm ≈ 794px) wide, which is wider than a
-   phone viewport — the document used to run off the right edge and was
-   clipped. Collapse the page to the viewport width and drop the print
-   margins so the text stays readable on a phone. */
+/* Mobile: the sheet keeps its exact desktop width so pagination matches
+   desktop page for page. Narrowing the sheet would reflow the text (more
+   line breaks → taller content → extra pages), which is why a phone used to
+   show two pages for content that fills one page on desktop. The canvas
+   scrolls horizontally instead; pinch-zoom still works for reading. */
 @media (max-width: 767px) {
   .rm-with-pagination {
-    --rm-page-width: 100% !important;
-    --rm-margin-left: 10px !important;
-    --rm-margin-right: 10px !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: var(--rm-page-width) !important;
+    max-width: none !important;
   }
 
-  #printableArea .rm-page-break .breaker {
+  /* Fluid writing view (pagination disabled): a single page that fits the
+     viewport, so editing never overflows. These rules only apply while the
+     plugin is disabled, so re-enabling print layout restores the exact
+     desktop geometry and page count. */
+  .rm-with-pagination[rm-pagination-disabled] {
     width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+    max-width: 100% !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  #printableArea {
+    overflow-x: auto !important;
   }
 
   .tiptap {

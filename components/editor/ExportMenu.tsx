@@ -39,7 +39,7 @@ const TARGETS: ExportTarget[] = [
   {
     format: 'pdf',
     label: 'PDF',
-    hint: 'Paginated PDF on the exact sheet',
+    hint: 'Selectable PDF, same pages as Word',
     icon: <FileText size={16} />,
   },
   {
